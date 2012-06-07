@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<window:RemindWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+					 xmlns:s="library://ns.adobe.com/flex/spark"
+					 xmlns:mx="library://ns.adobe.com/flex/mx"
+					 xmlns:window="com.fenxihui.desktop.view.window.*"
+					 width="352" height="160" layout="vertical" paddingBottom="8" paddingLeft="8"
+					 paddingRight="8" paddingTop="8">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:CurrencyFormatter id="yuanFormatter" precision="2" 
+							  currencySymbol="¥" decimalSeparatorFrom="."
+							  decimalSeparatorTo="." useNegativeSign="true" 
+							  useThousandsSeparator="true" alignSymbol="left"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			public var remindSid:uint=0;
+			
+			public function get remindCode():String{
+				return lblCode.text;
+			}
+			public function set remindCode(value:String):void{
+				lblCode.text=value;
+				title='股票提醒['+value+']';
+			}
+
+			private var _status:Boolean=false;
+			public function get remindStatus():Boolean{
+				return _status;
+			}
+			public function set remindStatus(value:Boolean):void{
+				_status=value;
+				lblStatus.text=value?'卖':'买';
+			}
+
+			public function get remindPrice():Number{
+				return parseFloat(lblPrice.text);
+			}
+			public function set remindPrice(value:Number):void{
+				lblPrice.text=yuanFormatter.format(value);
+			}
+			
+			public function get remindStorage():uint{
+				return uint(lblStorage.text);
+			}
+			public function set remindStorage(value:uint):void{
+				lblStorage.text=String(value);
+			}
+			
+			public function get remindEvaluate():String{
+				return lblEvaluate.text;
+			}
+			public function set remindEvaluate(value:String):void{
+				lblEvaluate.text=value;
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30" gap="1">
+		<s:Label width="72" height="100%" backgroundColor="#49A0E9" paddingLeft="6"
+				 paddingRight="6" text="股票代码：" textAlign="right" verticalAlign="middle"/>
+		<s:Label id="lblCode" width="100%" height="100%" backgroundColor="#49A0E9" color="#FF6600"
+				 fontFamily="Georgia" fontSize="12" fontWeight="bold" paddingLeft="6"
+				 paddingRight="6" text="002456" verticalAlign="middle"/>
+		<s:Image width="30" height="30"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="100%">
+		<s:Label id="lblStatus" height="100%" backgroundColor="#000000" color="#FFFFFF" fontSize="14"
+				 fontStyle="normal" fontWeight="bold" paddingLeft="6" paddingRight="6" text="买"
+				 verticalAlign="middle"/>
+		<s:VGroup width="100%" height="100%">
+			<s:HGroup width="100%" height="30">
+				<s:HGroup width="100%" height="100%" gap="1">
+					<s:Label width="72" height="100%" backgroundColor="#49A0E9" paddingLeft="6"
+							 paddingRight="6" text="价格：" textAlign="right" verticalAlign="middle"/>
+					<s:Label id="lblPrice" width="100%" height="100%" backgroundColor="#49A0E9"
+							 color="#FF6600" fontFamily="Georgia" fontSize="12" fontWeight="bold"
+							 paddingLeft="6" paddingRight="6" text="24.56" verticalAlign="middle"/>
+				</s:HGroup>
+				<s:HGroup width="100%" height="100%" gap="1">
+					<s:Label width="72" height="100%" backgroundColor="#49A0E9" paddingLeft="6"
+							 paddingRight="6" text="仓位：" textAlign="right" verticalAlign="middle"/>
+					<s:Label id="lblStorage" width="100%" height="100%" backgroundColor="#49A0E9"
+							 color="#FF6600" fontFamily="Georgia" fontSize="12" fontWeight="bold"
+							 paddingLeft="6" paddingRight="6" text="2456" verticalAlign="middle"/>
+				</s:HGroup>
+			</s:HGroup>
+			<s:Label id="lblEvaluate" width="100%" height="100%" backgroundColor="#49A0E9"
+					 maxDisplayedLines="5" showTruncationTip="true"/>
+		</s:VGroup>
+	</s:HGroup>
+</window:RemindWindow>

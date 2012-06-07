@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+		   xmlns:s="library://ns.adobe.com/flex/spark"
+		   xmlns:mx="library://ns.adobe.com/flex/mx"
+		   alwaysInFront="false" autoLayout="true" creationComplete="initWindow()"
+		   horizontalAlign="left" showStatusBar="false" styleName="window" systemChrome="none"
+		   title="全能股市操盘系统" transparent="true" titleIcon="@Embed(source='assets/icon_title.png')">
+	<fx:Metadata>
+		[Style(name = "borderThickness" ,defaultValue='1', type = "uint" , format = "uint" , inherit = "no" )]
+		[Style(name = "backgroundColor" , type = "uint" , format = "Color" , inherit = "no" )]
+		[Style(name = "backgroundAlpha" , type = "Number" , format = "Length" , inherit = "no" )]
+		[Style(name = "backgroundImage" , type = "Class" , format = "EmbeddedFile" , inherit = "no" )]
+		[Style(name = "backgroundPositionLeft",defaultValue='0' , type = "int" , format = "int" , inherit = "no" )]
+		[Style(name = "backgroundPositionTop",defaultValue='0' , type = "int" , format = "int" , inherit = "no" )]
+		[Style(name = "backgroundRepeat" ,defaultValue='false', type = "Boolean" , format = "Boolean" , inherit = "no" )]
+	</fx:Metadata>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.window{
+			titleTextStyleName:"title";
+			cornerRadius:6px;
+			dropShadowVisible:true;
+			dropShadowEnabled:true;
+			shadowDirection:right;
+			shadowDistance:10px;
+			dropShadowColor:#ff0000;
+			borderThickness:1;
+			borderColor:#b60002;
+			backgroundColor:#efefef;
+			backgroundAlpha:1;
+			titleBarColors:#b60002,#960002;
+			minimizeButtonSkin:ClassReference("skins.button.MinimizeButtonSkin");
+			maximizeButtonSkin:ClassReference("skins.button.MaximizeButtonSkin");
+			restoreButtonSkin:ClassReference("skins.button.RestoreButtonSkin");
+			closeButtonSkin:ClassReference("skins.button.CloseButtonSkin");
+		}
+		.title{
+			fontSize:14px;
+			textIndent:5px;
+			color:white;
+			fontWeight:bold;
+			chromeColor:white;
+		}
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import mx.core.windowClasses.TitleBar;
+			import mx.events.ResizeEvent;
+			
+			private var _closeButtonVisible:Boolean=true;
+			private var _maxButtonVisible:Boolean=true;
+			private var _minButtonVisible:Boolean=true;
+
+			public function get minButtonVisible():Boolean
+			{
+				return _minButtonVisible;
+			}
+
+			public function set minButtonVisible(value:Boolean):void
+			{
+				_minButtonVisible = value;
+				if(!sysTitleBar || !sysTitleBar.minimizeButton){
+					return;
+				}
+				if(_minButtonVisible==false){
+					//sysTitleBar.minimizeButton.visible=sysTitleBar.minimizeButton.includeInLayout=false;
+					sysTitleBar.removeChild(sysTitleBar.minimizeButton);
+				}else{
+					//sysTitleBar.minimizeButton.visible=sysTitleBar.minimizeButton.includeInLayout=true;
+					sysTitleBar.addChild(sysTitleBar.minimizeButton);
+					sysTitleBar.minimizeButton.buttonMode=true;
+					sysTitleBar.minimizeButton.useHandCursor=true;
+				}
+			}
+
+			public function get maxButtonVisible():Boolean
+			{
+				return _maxButtonVisible;
+			}
+
+			public function set maxButtonVisible(value:Boolean):void
+			{
+				_maxButtonVisible = value;
+				if(!sysTitleBar || !sysTitleBar.maximizeButton){
+					return;
+				}
+				if(_maxButtonVisible==false){
+					sysTitleBar.doubleClickEnabled=false;
+					//sysTitleBar.maximizeButton.visible=sysTitleBar.maximizeButton.includeInLayout=false;
+					sysTitleBar.removeChild(sysTitleBar.maximizeButton);
+				}else{
+					sysTitleBar.doubleClickEnabled=true;
+					//sysTitleBar.maximizeButton.visible=sysTitleBar.maximizeButton.includeInLayout=true;
+					sysTitleBar.addChild(sysTitleBar.maximizeButton);
+					sysTitleBar.maximizeButton.buttonMode=true;
+					sysTitleBar.maximizeButton.useHandCursor=true;
+				}
+			}
+
+			public function get closeButtonVisible():Boolean
+			{
+				return _closeButtonVisible;
+			}
+
+			public function set closeButtonVisible(value:Boolean):void
+			{
+				_closeButtonVisible = value;
+				if(!sysTitleBar || !sysTitleBar.closeButton){
+					return;
+				}
+				if(_closeButtonVisible==false){
+					//sysTitleBar.closeButton.visible=sysTitleBar.closeButton.includeInLayout=false;
+					sysTitleBar.removeChild(sysTitleBar.closeButton);
+				}else{
+					//sysTitleBar.closeButton.visible=sysTitleBar.closeButton.includeInLayout=true;
+					sysTitleBar.addChild(sysTitleBar.closeButton);
+					sysTitleBar.closeButton.buttonMode=true;
+					sysTitleBar.closeButton.useHandCursor=true;
+				}
+			}
+
+			protected function get sysTitleBar():TitleBar{
+				return titleBar as TitleBar;
+			}
+			
+			private var backgroundAlpha:Number;
+			
+			override protected function createChildren():void{
+				backgroundAlpha=getStyle('backgroundAlpha');
+				super.createChildren();
+				
+				if(!sysTitleBar){
+					if(getStyle('borderVisible')){
+						var border:Number=getStyle('borderWeight');
+						setStyle('paddingLeft',border);
+						setStyle('paddingRight',border);
+						//setStyle('paddingTop',border);
+						//setStyle('paddingBottom',border);
+					}
+					return;
+				}
+				minButtonVisible=_minButtonVisible;
+				maxButtonVisible=_maxButtonVisible;
+				closeButtonVisible=_closeButtonVisible;
+			}
+			private function initWindow():void{
+				if(titleBar && titleBar.visible)
+					height+=titleBar.height;
+				if(statusBar && statusBar.visible)
+					height+=statusBar.height;
+			}
+			
+			public function center():void{
+				nativeWindow.bounds=new Rectangle((Screen.mainScreen.bounds.width / 2 - (width/2)), (Screen.mainScreen.bounds.height / 2 - (height/2)), width, height);
+			}
+			
+			protected override function updateDisplayList(w:Number,h:Number):void{
+				super.updateDisplayList(w,h);
+
+				var cornerRadius:Number=getStyle('cornerRadius')*2;
+
+				graphics.clear();
+				graphics.beginFill(getStyle('backgroundColor'),backgroundAlpha);
+				graphics.drawRect(0,0,w,h);
+				graphics.endFill();
+
+				if(getStyle('backgroundImage')){
+					var backgroundImage:Class=getStyle('backgroundImage');
+					var bm:Bitmap = new backgroundImage;
+					graphics.beginBitmapFill(bm.bitmapData,new Matrix(1,0,0,1,getStyle('backgroundPositionLeft'),getStyle('backgroundPositionTop')),getStyle('backgroundRepeat'));
+					graphics.drawRect(0,0,bm.width,bm.height);
+					graphics.endFill();
+				}
+
+				if(getStyle('borderVisible')){
+					graphics.lineStyle(getStyle('borderThickness')*2,getStyle('borderColor'),getStyle('borderAlpha'));
+					graphics.drawRoundRect(0,0,w,h,cornerRadius,cornerRadius);
+				}
+
+				if(cornerRadius>0){
+					var _mask:Sprite=new Sprite;
+					_mask.graphics.beginFill(0x0);
+					_mask.graphics.drawRoundRect(0, 0,w,h,cornerRadius, cornerRadius);
+					_mask.graphics.endFill();
+					mask = _mask;
+				}
+			}
+			
+			public function set setMoveObject(e:DisplayObject):void{
+				e.addEventListener(MouseEvent.MOUSE_DOWN,startMove);
+				e.addEventListener(MouseEvent.MOUSE_OVER,endMove);
+				e.addEventListener(MouseEvent.MOUSE_UP,endMove);
+			}
+			
+			private var startPoint:Point;
+
+			public function startMove(e:MouseEvent):void{
+				var rect:Rectangle=nativeWindow.bounds;
+				startPoint=new Point(e.stageX,e.stageY);;
+				addEventListener(MouseEvent.MOUSE_MOVE,moveHandler);
+			}
+
+			private function moveHandler(e:MouseEvent):void{
+				var rect:Rectangle=nativeWindow.bounds;
+				rect.x+=e.stageX-startPoint.x;
+				rect.y+=e.stageY-startPoint.y;
+				nativeWindow.bounds=rect;
+			}
+
+			public function endMove(e:MouseEvent):void{
+				removeEventListener(MouseEvent.MOUSE_MOVE,moveHandler);
+			}
+		]]>
+	</fx:Script>
+</mx:Window>

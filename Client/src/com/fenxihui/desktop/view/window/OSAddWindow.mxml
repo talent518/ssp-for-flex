@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="700" height="424" creationComplete="initWindow(event)"
+				  defaultButton="{btnSubmit}" layout="vertical" maxButtonVisible="false"
+				  paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20"
+				  resizable="false" title="发布{strType}">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.User;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			
+			import mx.events.FlexEvent;
+			private static var _osAddWindow:OSAddWindow;
+			public static function get osAddWindow():OSAddWindow{
+				if(!_osAddWindow){
+					_osAddWindow=new OSAddWindow;
+				}
+				return _osAddWindow;
+			}
+			
+			public static function remove():void{
+				if(!_osAddWindow)
+					return;
+				_osAddWindow.nativeWindow.close();
+				_osAddWindow.removeAllChildren();
+				_osAddWindow.removeAllElements();
+				_osAddWindow=null;
+			}
+			
+			protected function btnSubmit_clickHandler(event:MouseEvent):void
+			{
+				var params:Object={};
+				params.code=iptCode.text;
+				params.name=iptName.text;
+				params.type=doType;
+				params.dealdate=dateDealDate.text;
+				params.amount=iptAmount.text;
+				params.reason=iptReason.text;
+				params.location=iptLocation.text;
+				params.price=iptPrice.text;
+				params.stoploss=iptStopLoss.text;
+				if(doType>2){
+					params.profitloss=iptProfitLoss.text;
+				}
+				RemoteProxy.bind('Stock.Add.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						remove();
+					});
+				});
+				RemoteProxy.bind('Stock.Add.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnSubmit.enabled=true;
+					});
+				});
+				btnSubmit.enabled=false;
+				RemoteProxy.send('Stock.Add',params);
+			}
+			protected function labelFunctionDate(item:Date):String{
+				return dateFormatter.format(item);
+			}
+			
+			protected function initWindow(event:FlexEvent):void
+			{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					remove();
+				});
+			}
+			
+			[Bindable]
+			private var strType:String;
+			
+			private var doType:int=0;
+
+			public function setDoType(type:uint):void{
+				var i:int;
+				var types:Array=[type1,type2,type3,type4];
+				for(i=0;i<types.length;i++){
+					types[i].selected=(type==i+1);
+					if(type==i+1)
+						strType=types[i].label;
+				}
+				if(type<3){
+					includeInProfitLoss.visible=includeInProfitLoss.includeInLayout=false;
+				}else{
+					includeInProfitLoss.visible=includeInProfitLoss.includeInLayout=true;
+				}
+				doType=type;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="YYYY-MM-DD"/>
+	</fx:Declarations>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="股票代码：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptCode" width="80" height="100%" maxChars="6" prompt="000000"
+						 restrict="0-9" widthInChars="6"/>
+		</s:HGroup>
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="股票名称：" textAlign="right" verticalAlign="middle"/>
+			<mx:TextInput id="iptName" width="100%" height="100%"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:HRule width="100%" chromeColor="#000000"/>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="30">
+			<s:Label width="60" height="100%" text="操作类型：" textAlign="right" verticalAlign="middle"/>
+			<s:RadioButton id="type1" height="100%" label="建仓" click="setDoType(1)"/>
+			<s:RadioButton id="type2" height="100%" label="补仓" click="setDoType(2)"/>
+			<s:RadioButton id="type3" height="100%" label="减仓" click="setDoType(3)"/>
+			<s:RadioButton id="type4" height="100%" label="清仓" click="setDoType(4)"/>
+		</s:HGroup>
+		<s:HGroup id="includeInProfitLoss" width="100%" height="30">
+			<s:Label width="60" height="100%" text="盈亏：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptProfitLoss" width="56" height="100%" maxChars="4" prompt="00.0"
+						 restrict="0-9." textAlign="right"/>
+			<s:Label height="100%" paddingLeft="-5" text="％" textAlign="right"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:HRule width="100%" chromeColor="#000000"/>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="交易日期：" textAlign="right" verticalAlign="middle"/>
+			<mx:DateField id="dateDealDate" width="160" height="100%" labelFunction="labelFunctionDate"/>
+		</s:HGroup>
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="数量：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptAmount" width="100" height="100%" restrict="0-9" prompt="0"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="仓位：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptLocation" width="213" height="30" prompt="以不超过七成仓位为宜，永远不要满仓"/>
+			<s:Label height="100%" paddingLeft="-5" text="％" textAlign="right"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="交易价格：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptPrice" width="56" height="100%" prompt="0.00" restrict="0-9." textAlign="right"/>
+			<s:Label height="100%" paddingLeft="-5" text="￥" textAlign="right"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%">
+		<s:Label width="60" height="100%" lineHeight="30" paddingBottom="5" paddingTop="5"
+				 text="交易理由：" textAlign="right" verticalAlign="top"/>
+		<s:TextArea id="iptReason" width="100%" height="90" prompt="理由充分，价格得当。"/>
+	</s:HGroup>
+	<s:HGroup width="100%">
+		<s:Label width="60" height="100%" lineHeight="30" paddingBottom="5" paddingTop="5" text="止损："
+				 textAlign="right" verticalAlign="top"/>
+		<s:TextArea id="iptStopLoss" width="100%" height="90" prompt="5、10日均线空排或死叉"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" horizontalAlign="center" textAlign="left">
+		<mx:Button id="btnSubmit" height="100%" label="提交" click="btnSubmit_clickHandler(event)"/>
+	</s:HGroup>
+</component:Window>

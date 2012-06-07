@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="508" height="428" layout="vertical" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" title="优选金股" verticalGap="20"
+				  width.add="600" height.add="460" creationComplete.add="refresh_list()"
+				  maxButtonVisible.add="true"
+				  maxButtonVisible.normal="false" title.normal="优选金股服务条款"
+				  width.view="600" height.view="460" creationComplete.view="refresh_list()"
+				  maxButtonVisible.view="true" close="remove()">
+	<component:states>
+		<s:State name="normal"/>
+		<s:State name="view"/>
+		<s:State name="add"/>
+	</component:states>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.Loading;
+			
+			private static var _goldWindow:GoldWindow;
+			public static function get goldWindow():GoldWindow{
+				if(!_goldWindow){
+					_goldWindow=new GoldWindow;
+				}
+				return _goldWindow;
+			}
+			
+			public static function remove():void{
+				if(!_goldWindow)
+					return;
+				_goldWindow.nativeWindow.close();
+				_goldWindow.removeAllChildren();
+				_goldWindow.removeAllElements();
+				_goldWindow=null;
+			}
+			
+			protected function agree_clickHandler(event:MouseEvent):void
+			{
+				RemoteProxy.bind('Gold.Agree.Succeed',function(request:XML):void{
+					currentState=request.@state.toString();
+				});
+				RemoteProxy.bind('Gold.Agree.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Gold.Agree',{});
+			}
+			
+			protected var sid:uint=0;
+			
+			[Bindable]
+			private var countRow:uint=1;
+			
+			[Bindable]
+			private var curPage:uint=1;
+			[Bindable]
+			private var countPage:uint=1;
+			[Bindable]
+			private var sizePage:uint=10;
+			
+			protected function calcPage():void{
+				sizePage=Math.max(10,sizePage);
+				if(countRow){
+					countPage=Math.ceil(countRow/sizePage);
+					curPage=Math.max(1,Math.min(curPage,countPage));
+				}else{
+					countPage=0;
+					curPage=0;
+				}
+				
+				firstPage.enabled=(curPage>1 && countPage>1);
+				prevPage.enabled=(curPage>1 && countPage>1);
+				nextPage.enabled=(curPage<countPage && countPage>1);
+				lastPage.enabled=(curPage<countPage && countPage>1);
+				
+				var lbl:LabelBorder;
+				for each(lbl in [firstPage,prevPage,nextPage,lastPage]){
+					if(lbl.enabled){
+						lbl.setStyle('color',0xFFFFFF);
+						lbl.setStyle('borderColor',0x960003);
+						lbl.setStyle('backgroundColor',0xb60003);
+					}else{
+						lbl.setStyle('color',0x333333);
+						lbl.setStyle('borderColor',0x666666);
+						lbl.setStyle('backgroundColor',0x999999);
+					}
+				}
+			}
+			
+			[Bindable]
+			protected var _dataGoldList:XMLList=null;
+			
+			public static function get dataGoldList():XMLList{
+				return _goldWindow._dataGoldList;
+			}
+			public static function set dataGoldList(value:XMLList):void{
+				with(_goldWindow){
+					delete _dataGoldList;
+					_dataGoldList=value as XMLList;
+					calcPage();
+					if(sid>0){
+						with(goldList){
+							validateNow();
+							try{
+								selectedItem=XML(_dataGoldList.(attribute('sid')==String(sid)));
+							}catch(e:*){
+								trace('"dataInfoList" updated auto selected error:',e);
+							}
+						}
+					}
+				}
+			}
+			
+			public function refresh_list():void
+			{
+				Loading.show(goldList,0x0,0.5);
+				RemoteProxy.bind('Gold.List',function(request:XML):void{
+					Loading.hide(goldList);
+					dataGoldList=XMLList(request.gold);
+					var _countRow:uint=uint(request.@counts.toString());
+					countRow=_countRow;
+					calcPage();
+					if(!dataGoldList){
+						ShowDialog(request.text(),false);
+					}
+				});
+				var params:Object=new Object;
+				params.page=curPage;
+				params.size=sizePage;
+				params.isToday=(chkIsToday.selected?1:0);
+				RemoteProxy.send('Gold.List',params);
+			}
+			
+			protected function iptPage_enterHandler():void
+			{
+				var _curPage:uint=curPage;
+				curPage=uint(iptPage.text);
+				stage.focus=goldList;
+				calcPage();
+				if(_curPage!=curPage)
+					refresh_list();
+			}
+			
+			protected function iptPage_focusInHandler(event:FocusEvent):void
+			{
+				iptPage.text=String(curPage);
+				iptPage.selectRange(iptPage.text.length,iptPage.text.length);
+			}
+			
+			protected function iptPage_focusOutHandler(event:FocusEvent):void
+			{
+				iptPage.text="";
+			}
+			
+			protected function iptSize_enterHandler():void
+			{
+				var _sizePage:uint=sizePage;
+				sizePage=uint(iptSize.text);
+				stage.focus=goldList;
+				calcPage();
+				if(_sizePage!=sizePage)
+					refresh_list();
+			}
+			
+			protected function iptSize_focusInHandler(event:FocusEvent):void
+			{
+				iptSize.text=String(sizePage);
+				iptSize.selectRange(iptSize.text.length,iptSize.text.length);
+			}
+			
+			protected function iptSize_focusOutHandler(event:FocusEvent):void
+			{
+				iptSize.text="";
+			}
+			
+			protected function firstPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=1;
+				refresh_list();
+			}
+			
+			protected function prevPage_clickHandler(event:MouseEvent):void
+			{
+				curPage--;
+				refresh_list();
+			}
+			
+			protected function nextPage_clickHandler(event:MouseEvent):void
+			{
+				curPage++;
+				refresh_list();
+			}
+			
+			protected function lastPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=countPage;
+				refresh_list();
+			}
+			
+			protected function add_clickHandler(event:MouseEvent):void
+			{
+				with(GoldAddWindow.goldAddWindow){
+					open(true);
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<s:VGroup includeIn="normal" width="100%" height="100%" paddingBottom="10" paddingLeft="10"
+			  paddingRight="10" paddingTop="10">
+		<s:RichText width="100%" height="100%" fontSize="16" lineHeight="25"
+					text="优选金股与投资组合，大家可以看到版块里的票有涨有跌。我们不想说这是验证势力，还是做一个马后炮式的推荐股票服务；分析会不做推荐股票的业务，但是不代表分析会会员本身不具备这个能力。&#xd;组合和金股只是两种不同的操作方式或者说是习惯，我们不建议股民直接跟上操作；而是让股民朋友观察两种操作方式哪一种更适合您自己。&#xd;前者是把鸡蛋分散放在几个（比如3-5）篮子里分散风险，计算最终收益；后者是把鸡蛋放在一个篮子里，靠技术、靠对大盘等信息的把握“赌票”。分析会不能组织您在股市里进行任何操作，只能提醒你，多看，多交流，少动手，少操作，该操作时再操作。之所以出现这2个版块，只是我们举例2个，让你观察，从而规范自己的操作习惯、行为、方式等等，找到适合自己的投资方式。"
+					textIndent="28" verticalAlign="middle"/>
+		<component:LabelBorder width="100%" height="40" backgroundAlpha="1.0"
+							   backgroundColor="#B60003" borderColor="#960003" borderVisible="true"
+							   borderWeight="1" buttonMode="true" click="agree_clickHandler(event)"
+							   color="#FFFFFF" cornerRadius="5" fontSize="20" fontWeight="bold"
+							   paddingLeft="10" paddingRight="10" text="同意服务条款并继续"
+							   textAlign="center" useHandCursor="true" verticalAlign="middle"/>
+	</s:VGroup>
+	<s:VGroup includeIn="view,add" width="100%" height="100%" gap="10">
+		<mx:HBox width="100%" height="30" borderVisible="true" horizontalGap="10">
+			<component:LabelBorder includeIn="add" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="add_clickHandler(event)" color="#FFFFFF" cornerRadius="5"
+								   fontWeight="bold" paddingLeft="10" paddingRight="10" text="发布金股"
+								   textAlign="center" useHandCursor="true" verticalAlign="middle"/>
+			<mx:HBox width="100%" height="100%" horizontalAlign="center" horizontalGap="0">
+				<s:Label height="100%" color="#666666" paddingRight="20" text="记录数：{countRow}"
+						 textAlign="center" verticalAlign="middle"/>
+				
+				<s:Label height="100%" paddingLeft="5" paddingRight="5" text="转到"
+						 verticalAlign="middle"/>
+				<s:TextInput id="iptPage" width="32" height="100%" enter="iptPage_enterHandler()"
+							 focusEnabled="true" focusIn="iptPage_focusInHandler(event)"
+							 focusOut="iptPage_focusOutHandler(event)" maxChars="5"
+							 prompt="{curPage}" restrict="0123456789" softKeyboardType="number"/>
+				<s:Label height="100%" paddingLeft="5" paddingRight="15" text="页"
+						 verticalAlign="middle"/>
+				<s:TextInput id="iptSize" width="32" height="100%" enter="iptSize_enterHandler()"
+							 focusEnabled="true" focusIn="iptSize_focusInHandler(event)"
+							 focusOut="iptSize_focusOutHandler(event)" maxChars="3"
+							 prompt="{sizePage}" restrict="0123456789"/>
+				<s:Label height="100%" paddingLeft="5" paddingRight="5" text="行数/页"
+						 verticalAlign="middle"/>
+			</mx:HBox>
+			<s:CheckBox id="chkIsToday" height="100%" label="只显示今天" change="refresh_list()"
+						selected="true"/>
+			<component:LabelBorder id="refreshGold" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#b60002" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="refresh_list()" color="#ffffff" cornerRadius="5"
+								   focusEnabled="true" fontWeight="bold" paddingLeft="5"
+								   paddingRight="5" text="刷新列表" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+		</mx:HBox>
+		<mx:DataGrid id="goldList" width="100%" height="100%" dataProvider="{_dataGoldList}"
+					 editable="false" fontSize="12" resizableColumns="true">
+			<mx:columns>
+				<mx:DataGridColumn dataField="@title" headerText="金股标题" sortable="false"
+								   textAlign="left"/>
+				<mx:DataGridColumn width="80" dataField="@dateline" headerText="发布时间"
+								   sortable="false" textAlign="center"/>
+				<mx:DataGridColumn width="68" headerText="操作"
+								   itemRenderer="com.fenxihui.desktop.view.item.ItemGoldOperition"
+								   sortable="false" textAlign="center"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:HBox width="100%" height="25" horizontalAlign="center">
+			<component:LabelBorder id="firstPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="firstPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="首页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<component:LabelBorder id="prevPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="prevPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="上一页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<s:Label height="100%" color="#666666" paddingLeft="5" paddingRight="5"
+					 text="当前页：{curPage}/总页数{countPage}" textAlign="center" verticalAlign="middle"/>
+			<component:LabelBorder id="nextPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="nextPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="下一页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<component:LabelBorder id="lastPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="lastPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="尾页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+		</mx:HBox>
+	</s:VGroup>
+</component:Window>

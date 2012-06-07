@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component3:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  xmlns:component4="com.fenxihui.desktop.view.component.*"
+				  width="450" maxButtonVisible="false" xmlns:component3="com.fenxihui.library.component.*">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			private static var _avatarWindow:AvatarWindow;
+			public static function get avatarWindow():AvatarWindow{
+				if(!_avatarWindow){
+					_avatarWindow=new AvatarWindow;
+				}
+				return _avatarWindow;
+			}
+			public function set avatar(value:XML):void{
+				minAvatar.source=value.@min.toString();
+				midAvatar.source=value.@mid.toString();
+				maxAvatar.source=value.@max.toString();
+			}
+			public function set args(value:XML):void{
+				updaterSWF.width=value.@width.toString();
+				updaterSWF.height=value.@height.toString();
+				updaterSWF.source=value.@src.toString().replace('http://uc.fenxihui.com/images','http://example.com/uc_camera_src');
+				updaterSWF.setStyle('backgroundColor',int(value.@bgcolor.toString().replace('#','0x')));
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="200" gap="41" verticalAlign="bottom">
+		<component3:ImageBorder id="minAvatar" width="48" height="48" cornerRadius="10"/>
+		<component3:ImageBorder id="midAvatar" width="120" height="120" cornerRadius="10"/>
+		<component3:ImageBorder id="maxAvatar" width="200" height="200" cornerRadius="10"/>
+	</s:HGroup>
+	<s:SWFLoader id="updaterSWF" width="450" height="253" scaleContent="true"/>
+</component3:Window>

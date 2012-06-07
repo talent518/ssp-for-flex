@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:mx="http://www.adobe.com/2006/mxml"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="285" height="170" creationComplete="initWindow()" fontSize="14"
+				  maxButtonVisible="false" minButtonVisible="false" paddingBottom="8"
+				  paddingLeft="8" paddingRight="8" paddingTop="8" resizable="false" title="提示消息"
+				  verticalAlign="top">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			public static const SUCCEED:String='succeed';
+			public static const FAILED:String='failed';
+			
+			[Bindable]
+			public var message:String;
+			
+			[Embed(source="assets/dialog_succeed_max.png")]
+			[Bindable]
+			private static var maxIconSucceed:Class;
+
+			[Embed(source="assets/dialog_succeed_min.png")]
+			[Bindable]
+			private static var minIconSucceed:Class;
+
+			[Embed(source="assets/dialog_failed_max.png")]
+			[Bindable]
+			private static var maxIconFailed:Class;
+
+			[Embed(source="assets/dialog_failed_min.png")]
+			[Bindable]
+			private static var minIconFailed:Class;
+
+			[Bindable]
+			private var maxIcon:Class;
+			
+			[Bindable]
+			private var minIcon:Class;
+
+			[Bindable]
+			private var _iconVisible:Boolean=false;
+			
+			
+			private var _showType:String=SUCCEED;
+			public function get showType():String{
+				return _showType;
+			}
+			public function set showType(value:String):void{
+				if(value==SUCCEED){
+					_iconVisible=true;
+					maxIcon=maxIconSucceed;
+					minIcon=minIconSucceed;
+				}else if(value==FAILED){
+					_iconVisible=true;
+					maxIcon=maxIconFailed;
+					minIcon=minIconFailed;
+				}else
+					_iconVisible=false;
+				_showType=value;
+			}
+			
+			private function initWindow():void
+			{
+				titleIcon=minIcon;
+				this.addEventListener(KeyboardEvent.KEY_UP,function(e:KeyboardEvent):void{
+					if(e.keyCode==Keyboard.ESCAPE || e.keyCode==Keyboard.ENTER)
+						close();
+				});
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%">
+		<mx:Image id="imgIcon" width="78" height="69" source="{maxIcon}" visible="{_iconVisible}"/>
+		<mx:TextArea id="lblMessage" width="100%" height="100%" htmlText="{message}" editable="false" borderStyle="none"/>
+	</mx:HBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button id="btnOK" width="80" height="25" label="确　定" click="close();" fontSize="14"/>
+	</mx:HBox>
+</component:Window>

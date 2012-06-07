@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component3:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  xmlns:component4="com.fenxihui.desktop.view.component.*"
+				  width="800" minWidth="400" height="600"
+				  horizontalScrollPolicy="off" layout="vertical" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" verticalGap="10" verticalScrollPolicy="off" title="{categoryTitle} - {infoTitle}" xmlns:component3="com.fenxihui.library.component.*">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flash.net.navigateToURL;
+			
+			import mx.events.FlexEvent;
+			
+			[Bindable]
+			private var categoryTitle:String;
+
+			[Bindable]
+			private var infoTitle:String;
+			
+			public function get category():XMLList{
+				return viewInfo.category;
+			}
+			public function set category(value:XMLList):void{
+				viewInfo.category=value;
+				categoryTitle=value.@gname.toString();
+			}
+
+			public function get info():XMLList{
+				return viewInfo.info;
+			}
+			public function set info(value:XMLList):void{
+				viewInfo.info=value;
+				infoTitle=value.@title.toString();
+			}
+		]]>
+	</fx:Script>
+	<component4:ViewInfo id="viewInfo" width="100%" height="100%"/>
+</component3:Window>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="650" height="500" backgroundImage="@Embed(source='assets/bg_login.png')"
+				  cornerRadius="10" creationComplete="initWindow(event)" defaultButton="{btnLogin}"
+				  dropShadowVisible="true" horizontalScrollPolicy="off" maxButtonVisible="false"
+				  resizable="false" setMoveObject="{windowMove}" showFlexChrome="false"
+				  verticalScrollPolicy="off">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.User;
+			import com.fenxihui.desktop.utils.Params;
+			
+			import mx.controls.Alert;
+			import mx.core.windowClasses.TitleBar;
+			import mx.events.FlexEvent;
+			import mx.graphics.BitmapFill;
+			
+			private static var _loginWindow:LoginWindow;
+			public static function get loginWindow():LoginWindow{
+				if(!_loginWindow){
+					_loginWindow=new LoginWindow;
+				}
+				return _loginWindow;
+			}
+			
+			public static function remove():void{
+				if(!_loginWindow)
+					return;
+				RegisterWindow.remove();
+				LostPasswdWindow.remove();
+				_loginWindow.nativeWindow.close();
+				_loginWindow.removeAllChildren();
+				_loginWindow.removeAllElements();
+				_loginWindow=null;
+				System.gc();
+			}
+			
+			protected function initWindow(e:*):void
+			{
+				addEventListener(Event.ACTIVATE,function(e:Event):void{
+					iptUserName.setFocus();
+				});
+				nativeWindow.addEventListener(NativeWindowDisplayStateEvent.DISPLAY_STATE_CHANGING,function(e:NativeWindowDisplayStateEvent):void{
+					if(e.afterDisplayState == NativeWindowDisplayState.MINIMIZED){
+						e.preventDefault();
+						nativeWindow.visible=false;
+					}
+				});
+				addEventListener(Event.CLOSING,function(e:Event):void{
+					e.preventDefault();
+					nativeWindow.visible=false;
+				});
+				this.activate();
+				try{
+					chkAutoLogin.selected=NativeApplication.nativeApplication.startAtLogin;
+				}catch(e:IllegalOperationError){
+					trace('In debug mode, system user login automatically start [ read ] invalid!');
+				}
+				var user:Object=Params.user;
+				if(user.username){
+					iptUserName.text=user.username;
+					iptUserName.setStyle('contentBackgroundAlpha',1);
+				}
+				if(user.password){
+					iptPasswd.text=user.password;
+					iptPasswd.setStyle('contentBackgroundAlpha',1);
+				}
+				if(Params.isRemember)
+					chkRemember.selected=true;
+				if(Params.autoLogin){
+					chkAutoLogin.selected=true;
+					chkRemember.selected=true;
+				}
+			}
+			
+			protected function btnLogin_clickHandler(event:MouseEvent):void
+			{
+				if(iptUserName.text==''){
+					Alert.show('用户名不能为空！','登录检查',Alert.OK,this);
+					return;
+				}
+				if(iptPasswd.text==''){
+					trace('密码不能为空！');
+					Alert.show('密码不能为空！','登录检查',Alert.OK,this);
+					return;
+				}
+				User.login(iptUserName.text,iptPasswd.text,chkRemember.selected,chkAutoLogin.selected);
+			}
+			
+			protected function chkAutoLogin_changeHandler(event:Event):void
+			{
+				try{
+					if(chkAutoLogin.selected)
+						chkRemember.selected=true;
+					NativeApplication.nativeApplication.startAtLogin=chkAutoLogin.selected;
+				}catch(e:IllegalOperationError){
+					trace('In debug mode, system user login automatically start [ write ] invalid!');
+				}
+			}
+			
+			protected function btnRegister_clickHandler(event:MouseEvent):void
+			{
+				with(RegisterWindow.registerWindow){
+					open(true); 
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+			
+			protected function btnLostPasswd_clickHandler(event:MouseEvent):void
+			{
+				with(LostPasswdWindow.lostPasswdWindow){
+					open(true); 
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:Group id="windowMove" width="100%" height="100%">
+		<s:Button x="600" y="10" buttonMode="true" click="close()"
+				  skinClass="skins.button.MinimizeButtonSkin" useHandCursor="true"/>
+		<s:Button x="620" y="10" buttonMode="true" click="Main.exit()"
+				  skinClass="skins.button.CloseButtonSkin" useHandCursor="true"/>
+		<mx:TextInput id="iptUserName" x="63" y="400" width="156" height="40" borderVisible="false"
+					  contentBackgroundAlpha="0.0" contentBackgroundColor="#FFFFFF"
+					  dropShadowVisible="false" focusEnabled="true"
+					  focusIn="iptUserName.setStyle('contentBackgroundAlpha',1)"
+					  focusOut="iptUserName.setStyle('contentBackgroundAlpha',iptUserName.text.length?1:0)"
+					  fontSize="22" paddingLeft="0" paddingRight="0" paddingTop="5" tabIndex="1"/>
+		<mx:TextInput id="iptPasswd" x="289" y="400" width="156" height="40" borderVisible="false"
+					  contentBackgroundAlpha="0.0" contentBackgroundColor="#FFFFFF"
+					  displayAsPassword="true" dropShadowVisible="false"
+					  focusIn="iptPasswd.setStyle('contentBackgroundAlpha',1)"
+					  focusOut="iptPasswd.setStyle('contentBackgroundAlpha',iptPasswd.text.length?1:0)"
+					  fontSize="22" paddingLeft="0" paddingRight="0" paddingTop="5" tabIndex="2"/>
+		<mx:Button id="btnLogin" y="398" right="18" width="164" height="44" label="登　录" alpha="0"
+				   buttonMode="true" chromeColor="#C90101" click="btnLogin_clickHandler(event)"
+				   color="#FFFFFF" focusColor="#B60002" fontFamily="微软雅黑,黑体" fontSize="22"
+				   tabIndex="5" textAlign="center" useHandCursor="true"/>
+		<mx:HBox x="0" y="447" width="100%" height="20" paddingLeft="10" paddingRight="10">
+			<mx:CheckBox id="chkRemember" width="100%" label="记住密码" buttonMode="true" fontSize="14"
+						 tabIndex="3" textAlign="center" useHandCursor="true"/>
+			<mx:CheckBox id="chkAutoLogin" width="100%" label="自动登录" buttonMode="true"
+						 change="chkAutoLogin_changeHandler(event)" fontSize="14" tabIndex="4"
+						 textAlign="center" useHandCursor="true"/>
+			<mx:LinkButton id="btnLostPasswd" width="100%" label="找回密码" buttonMode="true"
+						   click="btnLostPasswd_clickHandler(event)" focusColor="#EE9170"
+						   fontSize="14" paddingLeft="0" paddingRight="0" tabIndex="6"
+						   useHandCursor="true"/>
+		</mx:HBox>
+	</s:Group>
+</component:Window>

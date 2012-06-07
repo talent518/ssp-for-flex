@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component1:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  alwaysInFront="false" closeEffect="{moveClose}"
+				  creationComplete="initWindow();" creationCompleteEffect="{moveOpen}"
+				  maxButtonVisible="false" minButtonVisible="false" paddingBottom="10"
+				  paddingLeft="10" paddingRight="10" paddingTop="10" resizable="false"
+				  type="lightweight" xmlns:component1="com.fenxihui.library.component.*">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:Move id="moveOpen" duration="1000" effectEnd="alwaysInFront=true"/>
+		<mx:Move id="moveClose" duration="1000" effectStart="alwaysInFront=false"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			private function initWindow():void{
+				var rect:Rectangle=Screen.mainScreen.visibleBounds;
+				moveOpen.xFrom=moveOpen.xTo=rect.width-width;
+				moveOpen.yFrom=rect.height;
+				moveOpen.yTo=rect.height-height;
+				moveClose.xFrom=moveClose.xTo=rect.width-width;
+				moveClose.yFrom=rect.height-height;
+				moveClose.yTo=rect.height;
+			}
+
+		]]>
+	</fx:Script>
+</component1:Window>

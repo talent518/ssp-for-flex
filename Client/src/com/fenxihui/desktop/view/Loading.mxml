@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" resizeMode="noScale">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Image;
+			import mx.core.IChildList;
+			import mx.core.IFlexDisplayObject;
+			import mx.core.IUIComponent;
+			import mx.core.UIComponent;
+			import mx.events.ResizeEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.components.ResizeMode;
+			
+			private static var loadings:Object={};
+			
+			public static function show(parent:UIComponent,backgroundColor:uint=0x0,alpha:Number=0.6):void{
+				if(parent.systemManager && parent.systemManager.popUpChildren.getChildByName('loading_'+parent.name))
+					return;
+				var loading:Loading=new Loading;
+				loading.name='loading_'+parent.name;
+				loading.width=parent.width;
+				loading.height=parent.height;
+				loadings[loading.name]=loading;
+				parent.addEventListener(ResizeEvent.RESIZE,function(e:ResizeEvent):void{
+					var p:UIComponent=e.target as UIComponent;
+					var w:Loading=p.systemManager?p.systemManager.popUpChildren.getChildByName('loading_'+p.name) as Loading:null;
+					if(w && w.parent){
+						w.width=p.width;
+						w.height=p.height;
+						PopUpManager.centerPopUp(w);
+						trace(w.parent.name,"->",w.parent.width,p.width);
+					}
+				});
+				PopUpManager.addPopUp(loading,parent,false);
+				PopUpManager.centerPopUp(loading);
+			}
+			public static function hide(parent:UIComponent=null):void{
+				if(parent && loadings['loading_'+parent.name]){
+					PopUpManager.removePopUp(loadings['loading_'+parent.name]);
+					loadings['loading_'+parent.name]=null;
+					delete loadings['loading_'+parent.name];
+				}else{
+					for each(var loading:IFlexDisplayObject in loadings){
+						PopUpManager.removePopUp(loading);
+					}
+					loadings={};
+				}
+			}
+			
+			[Embed(source='assets/loading.swf')]
+			[Bindable]
+			private var loadingSWF:Class
+			
+			public static var image:Image,backgroundColor:uint=0x0,alpah:Number=0.6;
+			
+			override protected function createChildren():void{
+				super.createChildren();
+				stage.frameRate=10;
+				image=new Image;
+				image.source=loadingSWF;
+				image.width=32;
+				image.height=32;
+				image.verticalCenter=0;
+				image.horizontalCenter=0
+				addEventListener(ResizeEvent.RESIZE,function(e:ResizeEvent):void{
+					var g:Graphics=graphics;
+					g.clear();
+					g.beginFill(backgroundColor,alpah);
+					g.drawRect(0,0,width,height);
+					image.x=(width-32)/2;
+					image.y=(height-32)/2;
+					trace(image.x,image.y);
+				});
+				addElement(image);
+			}
+			
+		]]>
+	</fx:Script>
+</s:Group>

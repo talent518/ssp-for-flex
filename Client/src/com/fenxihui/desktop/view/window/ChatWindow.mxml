@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component1:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="590" height="472" horizontalGap="5" layout="horizontal" paddingBottom="5"
+				  paddingLeft="5" paddingRight="5" paddingTop="5" creationComplete="initWindow();" minWidth="535" minHeight="440" frameRate="5" xmlns:component1="com.fenxihui.library.component.*">
+	<fx:Declarations>
+		<fx:XMLList id="sendMenu">
+			<menuitem label="单击发送按钮发消息" name="Click" type="radio" groupName="send"/>
+			<menuitem type="separator"/>
+			<menuitem label="按Enter键发送消息" name="Enter" type="radio" groupName="send"/>
+			<menuitem label="按Ctrl+Enter键发送消息" name="CtrlEnter" type="radio" groupName="send"/>
+		</fx:XMLList>
+		<s:DateTimeFormatter id="dtf" dateTimePattern="YYYY-m-d H:i:s"/>
+	</fx:Declarations>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace component "com.fenxihui.library.component.*";
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.Chat;
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.utils.Smileys;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.ColorPickerEvent;
+			import mx.formatters.DateFormatter;
+			import mx.managers.CursorManager;
+			import mx.managers.CursorManagerPriority;
+			
+			public var userId:uint=0,nickname:String='';
+			
+			[Embed(source="assets/DividedBox_verticalCursor.png")]
+			[Bindable]
+			private static var overCursor:Class;
+			
+			private var startResized:Boolean=false;
+			private var oldMouseY:Number=0;
+			private var oldHeight:Number=0;
+			private var oldMaxHeight:Number=0;
+			
+			private static var chatWindows:Array=new Array();
+			public static function showChat(userId:uint,nickname:String,hasMessage:Boolean=false):ChatWindow{
+				if(!chatWindows[userId]){
+					chatWindows[userId]=new ChatWindow;
+					chatWindows[userId].userId=userId;
+					chatWindows[userId].nickname=nickname;
+					chatWindows[userId].title='正在与“'+nickname+'”交谈中...';
+					chatWindows[userId].open(true);
+					chatWindows[userId].center();
+					if(hasMessage)
+						chatWindows[userId].readMessage();
+				}else{
+					chatWindows[userId].activate();
+				}
+				return chatWindows[userId];
+			}
+			
+			public function initWindow():void{
+				for each(var hRule:HRule in [hRuleResizeInputHeight1,hRuleResizeInputHeight2]){
+					hRule.addEventListener(MouseEvent.MOUSE_OVER,overCursorEvent);
+					hRule.addEventListener(MouseEvent.MOUSE_OUT,outCursorEvent);
+					hRule.addEventListener(MouseEvent.MOUSE_DOWN,startResize);
+					hRule.addEventListener(MouseEvent.MOUSE_UP,stopResize);
+				}
+				addEventListener(MouseEvent.MOUSE_UP,stopResize);
+				stage.frameRate=10;
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					chatWindows[userId]=null;
+					delete chatWindows[userId];
+				});
+			}
+			
+			protected function overCursorEvent(event:MouseEvent):void{
+				Mouse.hide();
+				cursorManager.setCursor(overCursor,CursorManagerPriority.HIGH,-6,-8);
+			}
+			protected function outCursorEvent(event:MouseEvent):void{
+				if(startResized)
+					return;
+				Mouse.show();
+				cursorManager.removeAllCursors();
+			}
+			
+			private function startResize(e:MouseEvent):void{
+				e.stopPropagation();
+				oldMouseY=mouseY;
+				oldHeight=rtfInput.height;
+				oldMaxHeight=rtfOutput.height+rtfInput.height;
+				addEventListener(MouseEvent.MOUSE_MOVE,resizeEvent);
+				startResized=true;
+			}
+			private function resizeEvent(e:MouseEvent):void{
+				e.stopPropagation();
+				var h:Number=oldHeight-mouseY+oldMouseY;
+				//trace('old:'+oldMouseY,'new:'+mouseY,'result:'+h,rtfInput.explicitMaxHeight);
+				if(h>rtfInput.minHeight && rtfInput.minHeight+h<=oldMaxHeight)
+					rtfInput.height=h;
+				Mouse.hide();
+			}
+			private function stopResize(e:MouseEvent):void{
+				e.stopPropagation();
+				Mouse.show();
+				cursorManager.removeAllCursors();
+				removeEventListener(MouseEvent.MOUSE_MOVE,resizeEvent);
+				startResized=false;
+			}
+			private function imageclick(evt:Event):void{
+				//set focus/caretIndex to _input
+				stage.focus = rtfInput.textField;
+				if (rtfInput.isSpriteAt(rtfInput.caretIndex))
+				{
+					rtfInput.caretIndex+=1;
+				}
+				rtfInput.insertSprite(evt.currentTarget.source,rtfInput.caretIndex,true,false);
+				//var img:Image=evt.currentTarget as Image;
+				//var idx:int=int(img.data);
+				//关闭弹出菜单
+				this.popUpButton_pic.close();
+			}
+			//设置字体属性
+			private function checkBox_fontsetup(evt:Event):void
+			{
+				var ch:CheckBox=evt.currentTarget as CheckBox;
+				var data:String=ch.data.toString();
+				
+				if (data == "fontWeight"){
+					rtfInput.defaultTextFormat.bold=ch.selected;
+				}
+				
+				if (data == "fontStyle"){
+					rtfInput.defaultTextFormat.italic=ch.selected;
+				}
+				
+				if (data == "textDecoration"){
+					rtfInput.defaultTextFormat.underline=ch.selected;
+				}
+				rtfInput.textField.defaultTextFormat=rtfInput.defaultTextFormat;
+			}
+			
+			//设置字体颜色
+			private function colorPicker_color(evt:ColorPickerEvent):void
+			{
+				rtfInput.defaultTextFormat.color=this.fontsetup_color.selectedColor;
+				rtfInput.textField.defaultTextFormat=rtfInput.defaultTextFormat;
+			}
+			
+			private function now():String{
+				return dtf.format(new Date);
+			}
+			
+			public function readMessage():void{
+				RemoteProxy.bind('Chat.Receive.Succeed',function(request:XML):void{
+					for each (var xml:XML in request.messages){
+						rtfOutput.append('<p align="left"><font face="Arial" size="12" color="#0022ee">'+request.profile.@nickname.toString()+'&#32;&#32;'+now()+'</font></p>');
+						xml.htmlText='<textformat leftmargin="24px">'+xml.htmlText.toString()+'</textformat>';
+						rtfOutput.importXML(xml);
+					}
+				});
+				RemoteProxy.send('Chat.Receive',{uid:userId});
+			}
+			
+			private static const urlRegExp:RegExp=new RegExp("((?:http|ftp|https)://)([a-z0-9_-]+\.[a-z0-9_-]+)(\.[a-z0-9_-]*)((\&amp\;|\%[0-9a-z]{2}|[\.\/\?\&\=a-z0-9_-])*)", "ig");
+			private static const reValue:String="<a href='$1$2$3' target='_blank'><font color=\"#0072c1\"><b><i>$1$2$3$4</i></b></font></a>";
+			
+			protected function btnSend_clickHandler(event:MouseEvent):void{
+				rtfOutput.append('<p align="left"><font face="Arial" size="12" color="#008040">'+Params.profile.nickname+'&#32;&#32;'+now()+'</font></p>');
+				var xml:XML=rtfInput.exportXML();
+				xml.htmlText=xml.htmlText.toString().replace(urlRegExp, reValue);
+				Chat.send(userId,xml);
+				xml.htmlText='<textformat leftmargin="24px">'+xml.htmlText.toString()+'</textformat>';
+				rtfOutput.importXML(xml);
+				rtfInput.clear();
+			}
+		]]>
+	</fx:Script>
+	<s:BorderContainer left="10" width="100%" height="100%" borderColor="#cccccc" borderStyle="solid"
+					   borderVisible="true" borderWeight="1">
+		<s:layout>
+			<s:VerticalLayout gap="0"/>
+		</s:layout>
+		<component1:ChatBox id="rtfOutput" width="100%" height="100%" autoScroll="true"/>
+		<mx:HRule id="hRuleResizeInputHeight1" width="100%" strokeColor="#cccccc"/>
+		<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20" verticalAlign="middle">
+			<mx:PopUpButton id="popUpButton_pic" icon="@Embed('assets/smileys.png')" openAlways="true" toolTip="请选择表情图片" width="50">
+				<mx:popUp>
+					<mx:TitleWindow id="titleWindow_popUp" title="单击图片选择聊天表情" width="400" height="200" cornerRadius="5" showCloseButton="true"
+									verticalScrollPolicy="on" horizontalScrollPolicy="off" close="popUpButton_pic.close();">
+						<mx:ToolBar width="400">
+							<mx:Repeater id="smileys" dataProvider="{Smileys.smileys}">
+								<mx:Image click="imageclick(event)" buttonMode="true" data="{smileys.currentIndex}" toolTip="{smileys.currentItem.toolTip}" source="{smileys.currentItem.icon}"/>
+							</mx:Repeater>
+						</mx:ToolBar>
+					</mx:TitleWindow>
+				</mx:popUp>
+			</mx:PopUpButton>
+			<mx:PopUpButton id="popUpButton_fontSetup" icon="@Embed('assets/A.png')" openAlways="true" toolTip="设置字体样式" width="50">
+				<mx:popUp>
+					<mx:TitleWindow id="titleWindow_popUp_fontSetup" title="选择字体样式" cornerRadius="5"
+									showCloseButton="true" close="popUpButton_fontSetup.close();">
+						<mx:HBox>
+							<mx:CheckBox id="fontsetup_fontWeight" change="checkBox_fontsetup(event)" data="fontWeight" toolTip="粗体" label="">
+							</mx:CheckBox>
+							<mx:Image source="@Embed('assets/b.png')" toolTip="粗体">
+							</mx:Image>
+							<mx:CheckBox id="fontsetup_fontStyle" change="checkBox_fontsetup(event)" data="fontStyle" toolTip="倾斜" label="">
+							</mx:CheckBox>
+							<mx:Image source="@Embed('assets/i.png')" toolTip="倾斜">
+							</mx:Image>
+							<mx:CheckBox id="fontsetup_textDecoration" change="checkBox_fontsetup(event)" data="textDecoration" toolTip="下划线" label="">
+							</mx:CheckBox>
+							<mx:Image source="@Embed('assets/u.png')" toolTip="下划线">
+							</mx:Image>
+							<mx:ColorPicker id="fontsetup_color" change="colorPicker_color(event)" toolTip="颜色">
+							</mx:ColorPicker>
+						</mx:HBox>
+					</mx:TitleWindow>
+				</mx:popUp>
+			</mx:PopUpButton>
+		</s:HGroup>
+		<mx:HRule id="hRuleResizeInputHeight2" width="100%" strokeColor="#cccccc"/>
+		<component1:ChatBox id="rtfInput" width="100%" height="100" autoScroll="true" type="input"/>
+		<mx:HRule width="100%" strokeColor="#cccccc"/>
+		<s:HGroup width="100%" height="45" gap="10" paddingLeft="10" paddingRight="10"
+				  verticalAlign="middle">
+			<s:Label left="20" width="100%" height="25" maxDisplayedLines="1"
+					 showTruncationTip="true" text="股市有风险，操作请谨慎！" verticalAlign="middle"/>
+			<mx:Button id="btnClose" y="0" right="20" width="80" height="25" label="关　闭"
+					   fontSize="12" tabIndex="4" textAlign="center" click="close()"/>
+			<mx:PopUpMenuButton id="btnSend" y="-2" right="110" width="80" height="25" label="发　送"
+								fontSize="12" tabIndex="5" click="btnSend_clickHandler(event)"
+								dataProvider="{sendMenu}" labelField="@label"/>
+		</s:HGroup>
+	</s:BorderContainer>
+	<s:BorderContainer width="140" height="100%" borderColor="#cccccc" borderStyle="solid"
+					   borderVisible="true" borderWeight="1">
+		<s:layout>
+			<s:VerticalLayout gap="0"/>
+		</s:layout>
+		<s:VGroup width="100%" height="100%" horizontalAlign="center" paddingBottom="10"
+				  paddingTop="10">
+			<component1:ImageBorder width="120" height="120"
+								  source="@Embed(source='assets/noavatar_middle.gif')"/>
+		</s:VGroup>
+		<mx:HRule width="100%" strokeColor="#cccccc"/>
+		<s:VGroup width="140" height="140" horizontalAlign="center" verticalAlign="middle">
+			<component1:ImageBorder width="120" height="120"
+								  source="@Embed(source='assets/noavatar_middle.gif')"/>
+		</s:VGroup>
+	</s:BorderContainer>
+</component1:Window>

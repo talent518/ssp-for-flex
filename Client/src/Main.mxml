@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml"
+						xmlns:component="com.fenxihui.library.component.*"
+						visible="false" width="393" height="245"
+						creationComplete="initApplication();" layout="absolute"
+						showStatusBar="false">
+	<mx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace component "com.fenxihui.desktop.view.component.*";
+		@namespace window "com.fenxihui.desktop.view.window.*";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		global{
+			fontFamily:'宋体','Courier New';
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import air.update.ApplicationUpdaterUI;
+			import air.update.events.DownloadErrorEvent;
+			import air.update.events.StatusFileUpdateErrorEvent;
+			import air.update.events.StatusUpdateErrorEvent;
+			import air.update.events.StatusUpdateEvent;
+			import air.update.events.UpdateEvent;
+			
+			import com.fenxihui.desktop.model.User;
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.Loading;
+			import com.fenxihui.desktop.view.window.LoginWindow;
+			import com.fenxihui.desktop.view.window.MainWindow;
+			import com.fenxihui.desktop.view.window.OSWindow;
+			
+			import flash.desktop.DockIcon;
+			import flash.desktop.NativeApplication;
+			import flash.desktop.SystemTrayIcon;
+			import flash.display.NativeMenu;
+			import flash.display.NativeMenuItem;
+			import flash.display.NativeWindow;
+			import flash.display.Sprite;
+			import flash.events.Event;
+			import flash.net.URLRequest;
+			
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.Window;
+			import mx.effects.Move;
+			import mx.events.DragEvent;
+			import mx.events.EffectEvent;
+			import mx.events.FlexNativeMenuEvent;
+			import mx.utils.Base64Decoder;
+			import mx.utils.Base64Encoder;
+			import mx.utils.UIDUtil;
+			
+			private var appUpdater:ApplicationUpdaterUI=new ApplicationUpdaterUI();
+
+			
+			import org.gif.events.FrameEvent;
+			import org.gif.player.GIFPlayer;
+			
+			[Embed(source="assets/app_16.png")]
+			[Bindable]
+			private var defIcon16:Class;
+			
+			[Embed(source="assets/app_32.png")]
+			[Bindable]
+			private var defIcon32:Class;
+			
+			[Embed(source="assets/app_48.png")]
+			[Bindable]
+			private var defIcon48:Class;
+
+			[Embed(source="assets/app_128.png")]
+			[Bindable]
+			private var defIcon128:Class;
+			
+			private static const colorFilter:ColorMatrixFilter=new ColorMatrixFilter([0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+			
+			private function get defIcons():Array{
+				return [new defIcon16().bitmapData,new defIcon32().bitmapData,new defIcon48().bitmapData,new defIcon128().bitmapData];
+			}
+			
+			private var flickerIcons:Array=new Array(),noneIcons:Array=new Array();
+
+			private var timer:Timer=new Timer(360);
+			
+			[Embed(source="notify.mp3")]
+			[Bindable]
+			private var soundClass:Class;
+			
+			private var sound:Sound=new soundClass() as Sound;
+			
+			private var _trayToolTip:String,_oldTrayToolTip:String;
+			
+			public function setFlickerIconFromBitmap(bitmap:Bitmap,toolTip:String):void{
+				var _mask:Sprite=new Sprite;
+				_mask.graphics.clear();
+				_mask.graphics.beginFill(0x0);
+				_mask.graphics.drawRoundRect(0, 0,128,128,5, 5);
+				_mask.graphics.endFill();
+				bitmap.mask=_mask;
+
+				var _flickerIcons:Array=[];
+
+				var bitmapData:BitmapData;
+				for each(var i:int in [16,32,48,128]){
+					bitmapData=new BitmapData(i,i);
+					bitmapData.applyFilter(bitmapData,bitmapData.rect,new Point(0,0),colorFilter);
+					bitmapData.draw(bitmap,new Matrix(i/bitmap.width,0,0,i/bitmap.height));
+					_flickerIcons.push(bitmapData.clone());
+				}
+				startFlickerIcon(_flickerIcons,toolTip);
+			}
+
+			public function startFlickerIcon(_flickerIcons:Array,toolTip:String):void{
+				_oldTrayToolTip=trayToolTip;
+				trayToolTip=toolTip;
+				flickerIcons=_flickerIcons;
+				timer.reset();
+				timer.start();
+				sound.play();
+			}
+			
+			public function stopFlickerIcon():void{
+				trayToolTip=_oldTrayToolTip;
+				this.flickerIcons=[];
+				timer.reset();
+				NativeApplication.nativeApplication.icon.bitmaps=defIcons;
+			}
+			
+			public function get trayToolTip():String{
+				return _trayToolTip;
+			}
+			
+			public function set trayToolTip(toolTip:String):void{
+				if (NativeApplication.supportsSystemTrayIcon){
+					SystemTrayIcon(NativeApplication.nativeApplication.icon).tooltip=toolTip;
+				}
+				_trayToolTip=toolTip;
+			}
+			
+			private function initApplication():void{
+				NativeApplication.nativeApplication.autoExit = false;
+				this.autoExit=false;
+				iconMenu.addEventListener(FlexNativeMenuEvent.ITEM_CLICK,onSelectMenuItem);
+				var noneIcon:BitmapData;
+				for each(var side:int in [16,32,48,128]){
+					noneIcon=new BitmapData(side,side);
+					noneIcon.applyFilter(noneIcon,noneIcon.rect,new Point(0,0),colorFilter);
+					noneIcons.push(noneIcon.clone());
+				}
+
+				NativeApplication.nativeApplication.icon.bitmaps=defIcons;
+				timer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
+					NativeApplication.nativeApplication.icon.bitmaps=(timer.currentCount%2==0?flickerIcons:noneIcons);
+				});
+
+				if (NativeApplication.supportsSystemTrayIcon){
+					NativeApplication.nativeApplication.autoExit = false;
+					var tray:SystemTrayIcon = NativeApplication.nativeApplication.icon as SystemTrayIcon;
+					tray.menu = iconMenu.nativeMenu;
+					tray.addEventListener(ScreenMouseEvent.CLICK,OpenMainPanel);
+				}
+				if (NativeApplication.supportsDockIcon){
+					var dock:DockIcon = NativeApplication.nativeApplication.icon as DockIcon;
+					dock.menu = iconMenu.nativeMenu;
+					dock.addEventListener(Event.ACTIVATE,OpenMainPanel);
+				}
+				trayToolTip="全能股市操盘系统";
+				_main=this;
+				RemoteProxy.bind('User.Login',function(request:XML):void{
+					MainWindow.remove();
+					Main.setIconMenu(false);
+					with(LoginWindow.loginWindow){
+						open(true);
+						nativeWindow.visible = true;
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+					}
+					Loading.hide(LoginWindow.loginWindow);
+				});
+				checkForUpdate();
+			}
+			private function OpenMainPanel(e:*=null):void{
+				with(Params.isLogined?MainWindow.mainWindow:LoginWindow.loginWindow){
+					open(true); 
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+			private function onSelectMenuItem(e:FlexNativeMenuEvent):void{
+				switch(e.item.@name.toString()){
+					case "exit":
+						exit();
+						break;
+					case 'logout':
+						User.Logout();
+						break;
+					case 'openmain':
+						OpenMainPanel();
+						break;
+					default:
+						trace(e.item.toString());
+				}
+			}
+			
+			
+			private var _updateVersion:String;
+			private function checkForUpdate():void {
+				NativeApplication.nativeApplication.addEventListener(Event.EXITING, function(e:Event):void {
+					var opened:Array=NativeApplication.nativeApplication.openedWindows;
+					for (var i:int=0; i < opened.length; i++) {
+						opened[i].close();
+					}
+				});
+				if(appUpdater.isFirstRun){
+					ShowDialog('更新成功！',true);
+				}
+				
+				appUpdater.updateURL="http://soft.fenxihui.com/update.xml";
+				
+				appUpdater.isCheckForUpdateVisible=false;
+				appUpdater.isDownloadProgressVisible=appUpdater.isDownloadUpdateVisible=true;
+				appUpdater.isFileUpdateVisible=appUpdater.isInstallUpdateVisible=true;
+				appUpdater.isUnexpectedErrorVisible=true;
+				
+				_updateVersion=appUpdater.currentVersion;
+
+				appUpdater.isNewerVersionFunction=function(currentVersion:String,updateVersion:String):Boolean{
+					_updateVersion=updateVersion;
+					trace('currentVersion:'+currentVersion,'updateVersion:'+updateVersion);
+					var news:Array=updateVersion.split('.'),olds:Array=currentVersion.split('.');
+					for(var n:int=0;n<news.length;n++){
+						if(n>=olds.length || parseInt(news[n])>parseInt(olds[n])){
+							return true;
+						}
+					}
+					return false;
+				}
+				appUpdater.addEventListener(UpdateEvent.INITIALIZED, onUpdate);
+				appUpdater.addEventListener(StatusUpdateErrorEvent.UPDATE_ERROR, onError);
+				appUpdater.addEventListener(StatusFileUpdateErrorEvent.FILE_UPDATE_ERROR, onError);
+				appUpdater.addEventListener(DownloadErrorEvent.DOWNLOAD_ERROR, onError);
+				appUpdater.addEventListener(ErrorEvent.ERROR, onError);
+				appUpdater.addEventListener(StatusUpdateEvent.UPDATE_STATUS, onStatus);
+				appUpdater.initialize();
+			}
+			
+			private function onStatus(event:StatusUpdateEvent):void {
+				trace(event);
+				if(event.available==false){
+					if(Params.autoLogin){
+						User.relogin();
+					}else{
+						OpenMainPanel();
+					}
+					//this.nativeWindow.close();
+				}
+			}
+			
+			private function onError(event:ErrorEvent):void {
+				var msg:String;
+				switch(event.type){
+					case ErrorEvent.ERROR:
+						msg='初始化或更新过程出错！';
+						break;
+					case StatusUpdateErrorEvent.UPDATE_ERROR:
+						msg='检查更新错误！';
+						break;
+					case DownloadErrorEvent.DOWNLOAD_ERROR:
+						msg='下载失败,请手动下载最新'+_updateVersion+'版本！';
+						break;
+					default:
+						msg='未知自动更新错误！';
+						break;
+				}
+				ShowDialog(msg,false,function():void{
+					if(Params.autoLogin){
+						User.relogin();
+					}else{
+						OpenMainPanel();
+					}
+				});
+			}
+			
+			private function onUpdate(event:UpdateEvent):void {
+				appUpdater.checkNow();
+				trace('check update!');
+			}
+
+			private static var _main:Main;
+			public static function get main():Main{
+				return _main;
+			}
+			public static function setIconMenu(isLoginAfter:Boolean):void{
+				_main.iconMenu.dataProvider=(isLoginAfter?_main.trayIconMenuForLoginAfter:_main.trayIconMenuForLoginBefore);
+			}
+			public static function setActiveAccount(value:String):void{
+				var xml:*=_main.trayIconMenuForLoginAfter.menuitem.(attribute('name')=='logout');
+				//trace('setActiveAccount:',xml.toXMLString());
+				xml.@label=("注销["+value+"]"+(RemoteProxy.connected?" - 在线":" - 离线"));
+				setIconMenu(true);
+			}
+			public static function exit():void{
+				NativeApplication.nativeApplication.icon.bitmaps = [];
+				NativeApplication.nativeApplication.exit();
+			}
+		]]>
+	</mx:Script>
+	<mx:XML id="trayIconMenuForLoginAfter" format="e4x">
+		<root>
+			<menuitem label="注销" name="logout" keyEquivalent="l" />
+			<menuitem type="separator"/>
+			<menuitem label="打开主面板" name="openmain" keyEquivalent="o"/>
+			<menuitem type="separator"/>
+			<menuitem label="退出" name="exit" keyEquivalent="e"/>
+		</root>
+	</mx:XML>
+	<mx:XML id="trayIconMenuForLoginBefore" format="e4x">
+		<root>
+			<menuitem label="打开主面板" name="openmain" keyEquivalent="l"/>
+			<menuitem type="separator"/>
+			<menuitem label="退出" name="exit" keyEquivalent="e"/>
+		</root>
+	</mx:XML>
+	<mx:Script>
+		<![CDATA[
+		]]>
+	</mx:Script>
+	<mx:FlexNativeMenu id="iconMenu" dataProvider="{trayIconMenuForLoginBefore}" showRoot="false" labelField="@label" keyEquivalentField="@keyEquivalent"/>
+</mx:WindowedApplication>

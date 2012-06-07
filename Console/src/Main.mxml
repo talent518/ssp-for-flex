@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" title="fenxihui Console" creationComplete="init();">
+	<mx:Script>
+		private function init():void{
+			var initialBounds:Rectangle = new Rectangle((Screen.mainScreen.bounds.width / 2 - (this.width/2)), (Screen.mainScreen.bounds.height / 2 - (this.height/2)), this.width, this.height);
+			this.nativeWindow.bounds = initialBounds;				
+			this.nativeWindow.visible = true;
+		}
+	</mx:Script>
+</mx:WindowedApplication>

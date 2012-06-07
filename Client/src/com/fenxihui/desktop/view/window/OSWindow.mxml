@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  xmlns:component2="com.fenxihui.desktop.view.component.*"
+				  width="760" height="530" creationComplete="initWindow(event)" layout="vertical"
+				  setMoveObject="{windowMove}" showFlexChrome="false" verticalGap="0">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.Loading;
+			
+			import mx.charts.CategoryAxis;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.formatters.DateFormatter;
+			private static var _osWindow:OSWindow;
+			public static function get osWindow():OSWindow{
+				if(!_osWindow){
+					_osWindow=new OSWindow;
+				}
+				return _osWindow;
+			}
+			
+			public static function remove():void{
+				if(!_osWindow)
+					return;
+				_osWindow.nativeWindow.close();
+				_osWindow.removeAllChildren();
+				_osWindow.removeAllElements();
+				_osWindow=null;
+			}
+			
+			protected var sid:uint=0;
+			
+			[Bindable]
+			private var countRow:uint=1;
+			
+			[Bindable]
+			private var curPage:uint=1;
+			[Bindable]
+			private var countPage:uint=1;
+			[Bindable]
+			private var sizePage:uint=10;
+			
+			protected function calcPage():void{
+				sizePage=Math.max(10,sizePage);
+				if(countRow){
+					countPage=Math.ceil(countRow/sizePage);
+					curPage=Math.max(1,Math.min(curPage,countPage));
+				}else{
+					countPage=0;
+					curPage=0;
+				}
+				
+				firstPage.enabled=(curPage>1 && countPage>1);
+				prevPage.enabled=(curPage>1 && countPage>1);
+				nextPage.enabled=(curPage<countPage && countPage>1);
+				lastPage.enabled=(curPage<countPage && countPage>1);
+				
+				var lbl:LabelBorder;
+				for each(lbl in [firstPage,prevPage,nextPage,lastPage]){
+					if(lbl.enabled){
+						lbl.setStyle('color',0xFFFFFF);
+						lbl.setStyle('borderColor',0x960003);
+						lbl.setStyle('backgroundColor',0xb60003);
+					}else{
+						lbl.setStyle('color',0x333333);
+						lbl.setStyle('borderColor',0x666666);
+						lbl.setStyle('backgroundColor',0x999999);
+					}
+				}
+			}
+			
+			[Bindable]
+			protected var _dataStockList:XMLList=null;
+			
+			public static function get dataStockList():XMLList{
+				return _osWindow._dataStockList;
+			}
+			public static function set dataStockList(value:XMLList):void{
+				with(_osWindow){
+					delete _dataStockList;
+					_dataStockList=value as XMLList;
+					calcPage();
+					if(sid>0){
+						with(stockList){
+							validateNow();
+							try{
+								selectedItem=XML(_dataStockList.(attribute('sid')==String(sid)));
+							}catch(e:*){
+								trace('"dataInfoList" updated auto selected error:',e);
+							}
+						}
+					}
+				}
+			}
+			
+			protected var keyEvent:KeyboardEvent;
+			
+			protected function initWindow(event:FlexEvent):void
+			{
+				NativeApplication.nativeApplication.addEventListener(KeyboardEvent.KEY_DOWN,function(e:KeyboardEvent):void{
+					keyEvent=e;
+				});
+				
+				NativeApplication.nativeApplication.addEventListener(KeyboardEvent.KEY_UP,function(e:KeyboardEvent):void{
+					keyEvent=e;
+				});
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					remove();
+				});
+				listView.visible=listView.includeInLayout=false;
+			}
+			
+			private function setCABNavActive(cab:ChamferAngleButton):void{
+				var navs:Array=[cabReturn,cabType1,cabType2,cabType3,cabType4,cabEvalList,cabDoList];
+				var nav:ChamferAngleButton;
+				for each(nav in navs){
+					if(nav){
+						nav.actived=(nav==cab);
+					}
+				}
+			}
+			
+			private var _isEval:int=0;			
+			public function refresh_list(isEval:int=-1):void
+			{
+				if(isEval!=-1){
+					_isEval=isEval;
+					trace('isEval:'+isEval);
+					setCABNavActive(isEval==1?cabEvalList:cabDoList);
+				}
+				welcomeView.visible=welcomeView.includeInLayout=false;
+				listView.visible=listView.includeInLayout=true;
+				Loading.show(stockList,0x0,0.5);
+				RemoteProxy.bind('Stock.List',function(request:XML):void{
+					Loading.hide(stockList);
+					dataStockList=XMLList(request.stock);
+					var _countRow:uint=uint(request.@counts.toString());
+					countRow=_countRow;
+					calcPage();
+				});
+				var params:Object=new Object;
+				params.page=curPage;
+				params.size=sizePage;
+				params.isEval=_isEval;
+				RemoteProxy.send('Stock.List',params);
+			}
+			
+			protected function iptPage_enterHandler():void
+			{
+				var _curPage:uint=curPage;
+				curPage=uint(iptPage.text);
+				stage.focus=stockList;
+				calcPage();
+				if(_curPage!=curPage)
+					refresh_list();
+			}
+			
+			protected function iptPage_focusInHandler(event:FocusEvent):void
+			{
+				iptPage.text=String(curPage);
+				iptPage.selectRange(iptPage.text.length,iptPage.text.length);
+			}
+			
+			protected function iptPage_focusOutHandler(event:FocusEvent):void
+			{
+				iptPage.text="";
+			}
+			
+			protected function iptSize_enterHandler():void
+			{
+				var _sizePage:uint=sizePage;
+				sizePage=uint(iptSize.text);
+				stage.focus=stockList;
+				calcPage();
+				if(_sizePage!=sizePage)
+					refresh_list();
+			}
+			
+			protected function iptSize_focusInHandler(event:FocusEvent):void
+			{
+				iptSize.text=String(sizePage);
+				iptSize.selectRange(iptSize.text.length,iptSize.text.length);
+			}
+			
+			protected function iptSize_focusOutHandler(event:FocusEvent):void
+			{
+				iptSize.text="";
+			}
+			
+			protected function firstPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=1;
+				refresh_list();
+			}
+			
+			protected function prevPage_clickHandler(event:MouseEvent):void
+			{
+				curPage--;
+				refresh_list();
+			}
+			
+			protected function nextPage_clickHandler(event:MouseEvent):void
+			{
+				curPage++;
+				refresh_list();
+			}
+			
+			protected function lastPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=countPage;
+				refresh_list();
+			}
+			
+			protected function price_labelFunction(item:Object, column:DataGridColumn):String
+			{
+				return '￥'+priceFormatter.format(item[column.dataField]);
+			}
+			protected function percent_labelFunction(item:Object, column:DataGridColumn):String
+			{
+				return percentFormatter.format(String(item[column.dataField]))+'%';
+			}
+			protected function is_buy_labelFunction(item:Object, column:DataGridColumn):String
+			{
+				return (String)(item[column.dataField])=='0'?'卖出':'买入';
+			}
+			protected function type_labelFunction(item:Object, column:DataGridColumn):String
+			{
+				var ret:String='';
+				switch(parseInt(String(item[column.dataField]))){
+					case 1:
+						ret='建仓';
+						break;
+					case 2:
+						ret='补仓';
+						break;
+					case 3:
+						ret='减仓';
+						break;
+					case 4:
+						ret='清仓';
+						break;
+					default:
+						ret='-';
+						break;
+				}
+				return ret;
+			}
+			
+			protected function cabReturn_clickHandler(event:MouseEvent):void
+			{
+				welcomeView.visible=welcomeView.includeInLayout=true;
+				listView.visible=listView.includeInLayout=false;
+				setCABNavActive(cabReturn);
+			}
+			
+			protected function osAdd(type:uint):void{
+				with(OSAddWindow.osAddWindow){
+					open(true);
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+				OSAddWindow.osAddWindow.setDoType(type);
+			}
+		]]>
+	</fx:Script>
+	<component:states>
+		<s:State name="normal"/>
+		<s:State name="add"/>
+		<s:State name="eval"/>
+	</component:states>
+	<s:BorderContainer width="100%" height="40" backgroundColor="#c90101" borderVisible="false">
+		<s:BorderContainer id="windowMove" width="100%" height="100%"
+						   backgroundImage="@Embed(source='assets/bg_stock.png')"
+						   backgroundImageFillMode="clip" borderVisible="false">
+			<s:Button y="10" right="30" buttonMode="true" click="minimize()"
+					  skinClass="skins.button.MinimizeButtonSkin" toolTip="最小化" useHandCursor="true"/>
+			<s:Button y="10" right="10" buttonMode="true" click="close()"
+					  skinClass="skins.button.CloseButtonSkin" toolTip="关闭" useHandCursor="true"/>
+		</s:BorderContainer>
+	</s:BorderContainer>
+	<fx:Declarations>
+		<mx:NumberFormatter id="priceFormatter" decimalSeparatorTo="." precision="2"
+							useNegativeSign="true" useThousandsSeparator="false"/>
+		<mx:NumberFormatter id="percentFormatter" decimalSeparatorTo="." precision="1"
+							useNegativeSign="true" useThousandsSeparator="false"/>
+	</fx:Declarations>
+	<mx:HRule width="100%" height="1" chromeColor="#B60002"/>
+	<s:HGroup width="100%" height="100%">
+		<s:Group width="136" height="100%">
+			<s:BorderContainer left="0" right="15" height="100%" backgroundColor="#C90001"
+							   borderVisible="false"/>
+			<s:VGroup y="10" width="136" height="100%" paddingLeft="10">
+				<component2:ChamferAngleButton id="cabReturn" width="100%" height="30" actived="true"
+											   backgroundAlpha="1.0" backgroundColor="#B60002"
+											   borderAlpha="1.0" borderColor="#960002"
+											   borderVisible="true" borderWeight="1"
+											   buttonMode="true"
+											   click="cabReturn_clickHandler(event)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="返回" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabType1" includeIn="add" width="100%" height="30"
+											   backgroundAlpha="1.0" backgroundColor="#B60002"
+											   borderAlpha="1.0" borderColor="#960002"
+											   borderVisible="true" borderWeight="1"
+											   buttonMode="true" click="osAdd(1)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="建仓" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabType2" includeIn="add" width="100%" height="30"
+											   backgroundAlpha="1.0" backgroundColor="#B60002"
+											   borderAlpha="1.0" borderColor="#960002"
+											   borderVisible="true" borderWeight="1"
+											   buttonMode="true" click="osAdd(2)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="补仓" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabType3" includeIn="add" width="100%" height="30"
+											   backgroundAlpha="1.0" backgroundColor="#B60002"
+											   borderAlpha="1.0" borderColor="#960002"
+											   borderVisible="true" borderWeight="1"
+											   buttonMode="true" click="osAdd(3)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="减仓" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabType4" includeIn="add" width="100%" height="30"
+											   backgroundAlpha="1.0" backgroundColor="#B60002"
+											   borderAlpha="1.0" borderColor="#960002"
+											   borderVisible="true" borderWeight="1"
+											   buttonMode="true" click="osAdd(4)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="清仓" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabEvalList" includeIn="add,eval" width="100%"
+											   height="30" backgroundAlpha="1.0"
+											   backgroundColor="#B60002" borderAlpha="1.0"
+											   borderColor="#960002" borderVisible="true"
+											   borderWeight="1" buttonMode="true"
+											   click="refresh_list(1)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="交易评价" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+				<component2:ChamferAngleButton id="cabDoList" includeIn="add,eval" width="100%"
+											   height="30" backgroundAlpha="1.0"
+											   backgroundColor="#B60002" borderAlpha="1.0"
+											   borderColor="#960002" borderVisible="true"
+											   borderWeight="1" buttonMode="true"
+											   click="refresh_list(0)" color="#FFFFFF"
+											   fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+											   notActiveRight="25" rightBottom="15" rightTop="15"
+											   text="操作记录" textAlign="center" useHandCursor="true"
+											   verticalAlign="middle"/>
+			</s:VGroup>
+		</s:Group>
+		<s:VGroup id="welcomeView" width="100%" height="100%" gap="10" paddingBottom="10"
+				  paddingRight="10" paddingTop="10">
+			<s:TextArea width="100%" height="100%" borderVisible="false" color="#4C4C4C"
+						contentBackgroundAlpha="0.0" editable="false" fontFamily="微软雅黑"
+						fontSize="18" fontWeight="bold"
+						text="1、通过减少交易次数来提高投资收益，才是真正的赢家之道。&#xd;2、每交易一次必须登记一次，找不到充分买进或卖出理由时，停止交易。“买进要谨慎”，每次买进都应该三思而后行，并且一定要预先设定止损点。&#xd;3、尽量减少超短线操作次数，超短线交易效果不佳时要主动选择放弃。"
+						verticalAlign="middle"/>
+		</s:VGroup>
+		<s:VGroup id="listView" width="100%" height="100%" gap="10" paddingBottom="10"
+				  paddingRight="10" paddingTop="10">
+			<mx:HBox width="100%" height="30" borderVisible="true" horizontalGap="0">
+				<s:Label height="100%" color="#666666" paddingRight="20" text="记录数：{countRow}"
+						 textAlign="center" verticalAlign="middle"/>
+				<mx:HBox width="100%" height="100%" horizontalAlign="center" horizontalGap="0">
+					
+					<s:Label height="100%" paddingLeft="5" paddingRight="5" text="转到"
+							 verticalAlign="middle"/>
+					<s:TextInput id="iptPage" width="32" height="100%" enter="iptPage_enterHandler()"
+								 focusEnabled="true" focusIn="iptPage_focusInHandler(event)"
+								 focusOut="iptPage_focusOutHandler(event)" maxChars="5"
+								 prompt="{curPage}" restrict="0123456789" softKeyboardType="number"/>
+					<s:Label height="100%" paddingLeft="5" paddingRight="15" text="页"
+							 verticalAlign="middle"/>
+					<s:TextInput id="iptSize" width="32" height="100%" enter="iptSize_enterHandler()"
+								 focusEnabled="true" focusIn="iptSize_focusInHandler(event)"
+								 focusOut="iptSize_focusOutHandler(event)" maxChars="3"
+								 prompt="{sizePage}" restrict="0123456789"/>
+					<s:Label height="100%" paddingLeft="5" paddingRight="5" text="行数/页"
+							 verticalAlign="middle"/>
+				</mx:HBox>
+				<component:LabelBorder id="refreshStock" height="100%" backgroundColor="#b60002"
+									   borderColor="#960003" borderVisible="true" borderWeight="1"
+									   buttonMode="true" click="refresh_list()" color="#ffffff"
+									   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+									   paddingRight="5" text="刷新列表" textAlign="center"
+									   useHandCursor="true" verticalAlign="middle"/>
+			</mx:HBox>
+			<mx:DataGrid id="stockList" width="100%" height="100%" dataProvider="{_dataStockList}"
+						 editable="false" fontSize="12" resizableColumns="true">
+				<mx:columns>
+					<mx:DataGridColumn width="60" dataField="@code" headerText="股票代码"
+									   textAlign="center"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn dataField="@name" headerText="股票名称"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="60" dataField="@amount" headerText="数量"
+									   textAlign="center"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="60" dataField="@location" headerText="仓位"
+									   labelFunction="percent_labelFunction" textAlign="right"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="60" dataField="@price" headerText="交易价格"
+									   labelFunction="price_labelFunction" textAlign="right"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="80" dataField="@dealdate" headerText="交易日期"
+									   textAlign="center"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="60" dataField="@type" headerText="操作类型"
+									   labelFunction="type_labelFunction" textAlign="center"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="60" dataField="@is_buy" headerText="买卖状态"
+									   labelFunction="is_buy_labelFunction" textAlign="center"
+									   sortable.normal="false"/>
+					<mx:DataGridColumn width="68" headerText="操作"
+									   itemRenderer="com.fenxihui.desktop.view.item.ItemStockOperition"
+									   textAlign="center"
+									   sortable.normal="false"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:HBox width="100%" height="25" horizontalAlign="center">
+				<component:LabelBorder id="firstPage" height="100%" backgroundColor="#666666"
+									   buttonMode="true" click="firstPage_clickHandler(event)"
+									   color="#ffffff" cornerRadius="5" focusEnabled="true"
+									   paddingLeft="5" paddingRight="5" text="首页" textAlign="center"
+									   useHandCursor="true" verticalAlign="middle"/>
+				<component:LabelBorder id="prevPage" height="100%" backgroundColor="#666666"
+									   buttonMode="true" click="prevPage_clickHandler(event)"
+									   color="#ffffff" cornerRadius="5" focusEnabled="true"
+									   paddingLeft="5" paddingRight="5" text="上一页"
+									   textAlign="center" useHandCursor="true"
+									   verticalAlign="middle"/>
+				<s:Label height="100%" color="#666666" paddingLeft="5" paddingRight="5"
+						 text="当前页：{curPage}/总页数{countPage}" textAlign="center"
+						 verticalAlign="middle"/>
+				<component:LabelBorder id="nextPage" height="100%" backgroundColor="#666666"
+									   buttonMode="true" click="nextPage_clickHandler(event)"
+									   color="#ffffff" cornerRadius="5" focusEnabled="true"
+									   paddingLeft="5" paddingRight="5" text="下一页"
+									   textAlign="center" useHandCursor="true"
+									   verticalAlign="middle"/>
+				<component:LabelBorder id="lastPage" height="100%" backgroundColor="#666666"
+									   buttonMode="true" click="lastPage_clickHandler(event)"
+									   color="#ffffff" cornerRadius="5" focusEnabled="true"
+									   paddingLeft="5" paddingRight="5" text="尾页" textAlign="center"
+									   useHandCursor="true" verticalAlign="middle"/>
+			</mx:HBox>
+		</s:VGroup>
+	</s:HGroup>
+</component:Window>

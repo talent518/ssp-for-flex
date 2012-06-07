@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+						  xmlns:s="library://ns.adobe.com/flex/spark"
+						  xmlns:mx="library://ns.adobe.com/flex/mx"
+						  dataChange="dataChangeHandler(event)" focusEnabled="true">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.window.OSViewWindow;
+			
+			protected function view(sid:Number):void{
+				btnView.enabled=false;
+				RemoteProxy.bind('Stock.View.Succeed',function(request:XML):void{
+					var viewWindow:OSViewWindow=new OSViewWindow;
+					with(viewWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						currentState=request.@state.toString();
+						data=XML(request.stock);
+					}
+					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						btnView.enabled=true;
+					});
+				});
+				RemoteProxy.bind('Stock.View.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnView.enabled=true;
+					});
+				});
+				RemoteProxy.send('Stock.View',{sid:sid});
+			}
+			
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(!data){
+					return;
+				}
+				if(data.@iseval.toString()=='1'){
+					btnView.label="评论";
+				}else{
+					btnView.label="查看";
+				}
+			}
+		]]>
+	</fx:Script>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button id="btnView" width="60" label="查看" click="view(parseInt(data.@sid.toString()))"/>
+	</mx:HBox>
+</s:MXDataGridItemRenderer>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="com.fenxihui.library.component.ChatBox"/>
+    <classEntry path="Crypter"/>
+    <classEntry path="ObjectDragResize"/>
+    <classEntry path="skins.button.CloseButtonSkin"/>
+    <classEntry path="skins.button.MaximizeButtonSkin"/>
+    <classEntry path="skins.button.MinimizeButtonSkin"/>
+    <classEntry path="skins.button.RestoreButtonSkin"/>
+    <classEntry path="skins.TitleBarSkin"/>
+    <classEntry path="com.fenxihui.library.component.LabelBorder"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

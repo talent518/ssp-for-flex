@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  xmlns:component4="com.fenxihui.desktop.view.component.*"
+				  width="650" height="500" backgroundImage="@Embed(source='assets/bg_main.png')"
+				  creationComplete="initWindow();" dropShadowVisible="true" fontSize="12"
+				  horizontalScrollPolicy="off" layout="vertical" setMoveObject="{windowMove}"
+				  showFlexChrome="false" showStatusBar="false" showTitleBar="true"
+				  systemChrome="none" verticalGap="10" verticalScrollPolicy="off">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.News;
+			import com.fenxihui.desktop.model.Thread;
+			import com.fenxihui.desktop.model.User;
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.Loading;
+			import com.fenxihui.desktop.view.component.ViewInfo;
+			import com.fenxihui.desktop.view.item.ItemInfo;
+			
+			import flash.net.getClassByAlias;
+			import flash.net.navigateToURL;
+			
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.formatters.DateFormatter;
+			import mx.utils.ObjectUtil;
+			
+			private static var _mainWindow:MainWindow;
+			public static function get mainWindow():MainWindow{
+				if(!_mainWindow){
+					_mainWindow=new MainWindow;
+				}
+				return _mainWindow;
+			}
+			
+			public static function remove():void{
+				if(!_mainWindow){
+					return;
+				}
+				var windows:Array=NativeApplication.nativeApplication.openedWindows;
+				for(var i:uint=0;i<windows.length;i++){
+					(windows[i] as NativeWindow).close();
+				}
+				_mainWindow=null;
+				System.gc();
+				Params.statusChangeEvent=null;
+			}
+			
+			public function initWindow():void{
+				nativeWindow.addEventListener(NativeWindowDisplayStateEvent.DISPLAY_STATE_CHANGING,function(e:NativeWindowDisplayStateEvent):void{
+					if(e.afterDisplayState == NativeWindowDisplayState.MINIMIZED){
+						e.preventDefault();
+						nativeWindow.visible=false;
+					}
+				});
+				addEventListener(Event.CLOSING,function(e:Event):void{
+					e.preventDefault();
+					nativeWindow.visible=false;
+				});
+				
+				Main.setActiveAccount(Params.profile.nickname);
+				Loading.hide(_mainWindow);
+				Params.statusChangeEvent=function(status:int):void{
+					if(status!=1){
+						Main.setActiveAccount(Params.profile.nickname);
+						Loading.show(_mainWindow,0x0,0.5);
+					}
+					trace('Status:'+(status?'Online':'Offline'));
+				}
+			}
+			
+			[Bindable]
+			public static var user:Object;
+			
+			[Bindable]
+			public static var profile:Object;
+			
+			[Bindable]
+			public static var setting:Object;
+			
+			protected function OS_clickHandler(event:MouseEvent):void
+			{
+				RemoteProxy.bind('Stock.State.Succeed',function(request:XML):void{
+					with(OSWindow.osWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						currentState=request.@state.toString();
+					}
+				});
+				RemoteProxy.bind('Stock.State.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Stock.State',{});
+			}
+			
+			protected function Broadcast_clickHandler(event:MouseEvent):void
+			{
+				RemoteProxy.bind('Broadcast.State.Succeed',function(request:XML):void{
+					with(BroadcastWindow.broadcastWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						currentState=request.@state.toString();
+					}
+				});
+				RemoteProxy.bind('Broadcast.State.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Broadcast.State',{});
+			}
+			
+			protected function Gold_clickHandler(event:MouseEvent):void
+			{
+				RemoteProxy.bind('Gold.State.Succeed',function(request:XML):void{
+					with(GoldWindow.goldWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						currentState=request.@state.toString();
+					}
+				});
+				RemoteProxy.bind('Gold.State.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Gold.State',{});
+			}
+			
+			protected function Invest_clickHandler(event:MouseEvent):void
+			{
+				RemoteProxy.bind('Invest.State.Succeed',function(request:XML):void{
+					with(InvestWindow.investWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						currentState=request.@state.toString();
+					}
+				});
+				RemoteProxy.bind('Invest.State.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Invest.State',{});
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Group id="windowMove" width="100%" height="40">
+		<s:Button x="600" y="10" buttonMode="true" click="close()"
+				  skinClass="skins.button.MinimizeButtonSkin" toolTip="最小化到托盘" useHandCursor="true"/>
+		<s:Button x="620" y="10" buttonMode="true" click="Main.exit()"
+				  skinClass="skins.button.CloseButtonSkin" toolTip="退出软件" useHandCursor="true"/>
+	</s:Group>
+	<s:HGroup width="100%" height="100%" paddingLeft="10" paddingRight="10">
+		<s:BorderContainer width="100%" height="100%" backgroundAlpha="0.5" borderColor="#DDDDDD"
+						   chromeColor="#DDDDDD">
+			<s:layout>
+				<s:VerticalLayout paddingBottom="15" paddingLeft="15" paddingRight="15"
+								  paddingTop="15"/>
+			</s:layout>
+			<s:Label color="#b60002" fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+					 text="欢迎您，{profile.nickname}，您的会员服务剩余{width}天。" textDecoration="none"
+					 verticalAlign="middle"/>
+			<s:Label color="#b60002" fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
+					 text="您上一次登录时间是：{user.prevlogtime}" textDecoration="none"
+					 verticalAlign="middle"/>
+			<s:HGroup width="100%" height="40" gap="10">
+				<s:BorderContainer width="100%" height="100%" backgroundImage="{Icons.Search}"
+								   backgroundImageFillMode="clip" borderColor="#CA0204"
+								   cornerRadius="10">
+					<s:layout>
+						<s:HorizontalLayout gap="0" paddingLeft="40"/>
+					</s:layout>
+					<s:TextInput x="60" y="10" width="100%" height="100%" borderVisible="false"
+								 contentBackgroundAlpha="0.0" fontFamily="微软雅黑" fontSize="20"
+								 fontStyle="normal" fontWeight="bold" paddingBottom="0"
+								 paddingLeft="0" paddingRight="5" paddingTop="0" prompt="搜索你需要的内容"/>
+				</s:BorderContainer>
+				<component:LabelBorder width="160" height="100%" backgroundAlpha="1.0"
+									   backgroundColor="#B60003" borderColor="#960003"
+									   buttonMode="true" color="#FFFFFF" cornerRadius="10"
+									   fontFamily="微软雅黑" fontSize="20" fontWeight="bold" text="点击搜索"
+									   textAlign="center" useHandCursor="true"
+									   verticalAlign="middle"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="80">
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   click="OS_clickHandler(event)" cornerRadius="10"
+								   useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image x="29" y="11" width="40" height="40" source="{Icons.OS}"/>
+					<s:Label x="164" y="30" width="100%" height="40" color="#b60002"
+							 fontFamily="微软雅黑" fontSize="22" fontWeight="bold" text="操作系统"
+							 textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true" click="Gold_clickHandler(event)">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.Gold}"/>
+					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="优选金股" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true" click="Invest_clickHandler(event)">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.Invest}"/>
+					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="投资组合" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+			</s:HGroup>
+			<s:HGroup width="100%" height="80">
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true" click="Broadcast_clickHandler(event)">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image x="29" y="11" width="40" height="40" source="{Icons.Broadcast}"/>
+					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="盘中直播" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.Consult}"/>
+					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="个股会诊" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.News}"/>
+					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="热点新闻" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+			</s:HGroup>
+			<s:HGroup width="100%" height="80">
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image x="29" y="11" width="40" height="40" source="{Icons.Hot}"/>
+					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="热点板块" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.MustRead}"/>
+					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="每日必读" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
+								   cornerRadius="10" useHandCursor="true">
+					<s:layout>
+						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
+											paddingTop="20"/>
+					</s:layout>
+					<s:Image width="40" height="40" source="{Icons.Pool}"/>
+					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
+							 fontWeight="bold" text="股票池" textAlign="left" verticalAlign="middle"/>
+				</s:BorderContainer>
+			</s:HGroup>
+		</s:BorderContainer>
+	</s:HGroup>
+	<s:HGroup width="100%" paddingBottom="10" paddingLeft="10" paddingRight="10">
+		<s:HGroup width="100%" color="#B60001" contentBackgroundColor="#FFFFFF" gap="0">
+			<s:Label fontFamily="宋体" fontSize="14" fontWeight="bold" text="蓝筹科技"
+					 textDecoration="underline" verticalAlign="top"/>
+			<s:Label color="#999999" fontFamily="宋体" fontSize="14" fontWeight="bold" text="·"
+					 textDecoration="none" verticalAlign="top"/>
+			<s:Label buttonMode="true"
+					 click="navigateToURL(new URLRequest('http://www.fenxihui.com/'),'_blank')"
+					 fontFamily="宋体" fontSize="14" fontWeight="bold" text="分析会"
+					 textDecoration="underline" useHandCursor="true" verticalAlign="top"/>
+			<s:Label color="#999999" fontFamily="宋体" fontSize="14" fontWeight="bold" text="·"
+					 textDecoration="none" verticalAlign="top"/>
+			<s:Label color="#333333" fontFamily="宋体" fontSize="14" fontWeight="bold" text="版权所有"
+					 textDecoration="none" verticalAlign="top"/>
+		</s:HGroup>
+		<s:Label color="#C90000" fontFamily="宋体" fontSize="14" fontWeight="bold" text="股市有风险，操作请谨慎"
+				 textDecoration="none" verticalAlign="top"/>
+	</s:HGroup>
+</component:Window>

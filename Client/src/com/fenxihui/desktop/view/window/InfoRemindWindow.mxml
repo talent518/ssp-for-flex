@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<window:RemindWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					 xmlns:s="library://ns.adobe.com/flex/spark" 
+					 xmlns:mx="library://ns.adobe.com/flex/mx"
+					 xmlns:window="com.fenxihui.desktop.view.window.*"
+					 width="330" height="200">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.News;
+			import com.fenxihui.desktop.model.Thread;
+			import com.fenxihui.desktop.utils.Params;
+			
+			public var remindId:uint;
+			
+			public function get remindTitle():String{
+				return lblRemindTitle.text;
+			}
+			public function set remindTitle(value:String):void{
+				lblRemindTitle.text=value;
+			}
+			
+			public function get remindSummary():String{
+				return lblRemindSummary.text;
+			}
+			public function set remindSummary(value:String):void{
+				lblRemindSummary.text=value;
+			}
+			
+			public function get remindDateline():String{
+				return lblRemindDateline.text;
+			}
+			public function set remindDateline(value:String):void{
+				lblRemindDateline.text=value;
+			}
+			
+			protected function detail_clickHandler(event:MouseEvent):void
+			{
+				switch(Params.infoType){
+					case 'news':
+						News.view(remindId);
+						break;
+					case 'thread':
+						Thread.view(remindId);
+						break;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<mx:Text id="lblRemindTitle" width="100%" fontSize="14" fontWeight="bold" text="标签" textAlign="left"/>
+	<mx:HRule width="100%"/>
+	<mx:Text id="lblRemindSummary" width="100%" height="100%" text="文本"/>
+	<s:Group width="100%">
+		<mx:Label id="lblRemindDateline" text="文本"/>
+		<mx:LinkButton right="0" label="查看详情"
+					   color="#1670EB" focusColor="#EE9170" fontSize="12"
+					   paddingLeft="5" paddingRight="5" tabIndex="6"
+					   useHandCursor="true" click="detail_clickHandler(event)"/>
+	</s:Group>
+</window:RemindWindow>

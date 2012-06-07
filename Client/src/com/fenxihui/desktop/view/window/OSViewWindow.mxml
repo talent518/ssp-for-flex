@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="680" dataChange="dataChangeHandler(event)" layout="vertical"
+				  paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"
+				  height.eval="430"
+				  height.none="292"
+				  height.view="430">
+	<component:states>
+		<s:State name="eval"/>
+		<s:State name="view"/>
+		<s:State name="none"/>
+	</component:states>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			
+			import mx.events.FlexEvent;
+			
+			
+			private var doType:uint=0;
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(!data){
+					return;
+				}
+				
+				lblTitle.text=data.@code+' - '+data.@name;
+				doType=parseInt(data.@type.toString());
+				if(doType>2){
+					lblProfitLoss.text=data.@profitloss+'%';
+					hgpProfitLoss.visible=hgpProfitLoss.includeInLayout=true;
+				}else{
+					hgpProfitLoss.visible=hgpProfitLoss.includeInLayout=false;
+				}
+				switch(doType){
+					case 1:
+						lblTitle.text+=' - 建仓';
+						break;
+					case 2:
+						lblTitle.text+=' - 补仓';
+						break;
+					case 3:
+						lblTitle.text+=' - 减仓';
+						break;
+					case 4:
+						lblTitle.text+=' - 清仓';
+						break;
+				}
+				lblTitle.text+=' - '+data.@dealdate;
+				
+				title=lblTitle.text;
+
+				lblAmount.text=data.@amount+'%';
+				lblLocation.text=data.@location+'%';
+				lblPrice.text='￥'+data.@price;
+				lblReason.text=data.@reason;
+				lblStopLoss.text=data.@stoploss;
+			}
+			
+			protected function btnEval_clickHandler(event:MouseEvent):void
+			{
+				if(iptEval.text.length==0){
+					ShowDialog('请输入评语！',false,function():void{
+						focusManager.setFocus(iptEval);
+					});
+					return;
+				}
+				btnEval.enabled=false;
+				RemoteProxy.bind('Stock.Eval.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						nativeWindow.close();
+						with(OSWindow.osWindow){
+							open(true);
+							nativeWindow.activate();
+							nativeWindow.restore();
+							nativeWindow.orderToFront();
+							center();
+							refresh_list();
+						}
+					});
+						
+				});
+				RemoteProxy.bind('Stock.Eval.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnEval.enabled=true;
+					});
+				});
+				RemoteProxy.send('Stock.Eval',{sid:data.@sid.toString(),evaluation:iptEval.text});
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Label id="lblTitle" width="100%" height="40" fontFamily="宋体" fontSize="24" fontWeight="bold"
+			 text="011234 - 中国石化 - 买入 - 建仓 - 2012.5.6" textAlign="center" verticalAlign="middle"/>
+	<mx:HRule width="100%"/>
+	<s:HGroup width="100%" height="40">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="60" height="100%" text="数量：" textAlign="right" verticalAlign="middle"/>
+			<s:Label id="lblAmount" height="100%" color="#FF6600" fontFamily="Georgia" fontSize="20"
+					 fontWeight="bold" text="5480" textAlign="left" verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="60" height="100%" text="仓位：" textAlign="right" verticalAlign="middle"/>
+			<s:Label id="lblLocation" height="100%" color="#FF6600" fontFamily="Georgia"
+					 fontSize="20" fontWeight="bold" text="86%" textAlign="left"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="60" height="100%" text="交易价格：" textAlign="right" verticalAlign="middle"/>
+			<s:Label id="lblPrice" height="100%" color="#FF6600" fontFamily="Georgia" fontSize="20"
+					 fontWeight="bold" text="￥15.30" textAlign="left" verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup id="hgpProfitLoss" width="100%" height="100%">
+			<s:Label width="60" height="100%" text="盈亏：" textAlign="right" verticalAlign="middle"/>
+			<s:Label id="lblProfitLoss" height="100%" color="#00CC33" fontFamily="Georgia"
+					 fontSize="20" fontWeight="bold" text="-23.5%" textAlign="left"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:BorderContainer width="100%" borderColor="#999999">
+		<s:layout>
+			<s:VerticalLayout gap="0"/>
+		</s:layout>
+		<s:BorderContainer width="100%" height="30" backgroundColor="#cccccc" borderColor="#afafaf"
+						   borderVisible="false">
+			<s:layout>
+				<s:HorizontalLayout/>
+			</s:layout>
+			<s:Label width="100%" height="100%" fontFamily="微软雅黑,黑体" fontSize="14" fontWeight="bold"
+					 paddingLeft="10" text="交易理由：" textAlign="left" verticalAlign="middle"/>
+		</s:BorderContainer>
+		<s:Label id="lblReason" x="29" y="8" width="100%" height="50" fontSize="14" lineHeight="1200"
+				 paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"
+				 text="理由充分，价格得当。"/>
+	</s:BorderContainer>
+	<s:BorderContainer width="100%" borderColor="#999999">
+		<s:layout>
+			<s:VerticalLayout gap="0"/>
+		</s:layout>
+		<s:BorderContainer width="100%" height="30" backgroundColor="#cccccc" borderColor="#afafaf"
+						   borderVisible="false">
+			<s:layout>
+				<s:HorizontalLayout/>
+			</s:layout>
+			<s:Label width="100%" height="100%" fontFamily="微软雅黑,黑体" fontSize="14" fontWeight="bold"
+					 paddingLeft="10" text="止损：" textAlign="left" verticalAlign="middle"/>
+		</s:BorderContainer>
+		<s:Label id="lblStopLoss" x="29" y="8" width="100%" fontSize="14"
+				 paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"
+				 text="5、10日均线空排或死叉"
+				 height="50" lineHeight="1200"/>
+	</s:BorderContainer>
+	<s:BorderContainer id="pnlEvaluation" width="100%" borderColor="#999999" includeIn="eval,view">
+		<s:layout>
+			<s:VerticalLayout gap="0"/>
+		</s:layout>
+		<s:BorderContainer width="100%" height="30" backgroundColor="#cccccc" borderColor="#afafaf"
+						   borderVisible="false">
+			<s:layout>
+				<s:HorizontalLayout/>
+			</s:layout>
+			<s:Label width="100%" height="100%" fontFamily="微软雅黑,黑体" fontSize="14" fontWeight="bold"
+					 paddingLeft="10" text="专家点评：" textAlign="left" verticalAlign="middle"/>
+			<s:Label id="lblEvalDate" height="100%" paddingRight="10" text="{data.@evaldate}"
+					 textAlign="left" verticalAlign="middle" includeIn="view"/>
+		</s:BorderContainer>
+		<s:HGroup width="100%">
+			<s:VGroup horizontalAlign="center"
+					  paddingBottom="10" paddingLeft="10" paddingRight="10"
+					  paddingTop="10">
+				<component:ImageBorder id="rimgEvalAvatar" width="48" height="48"
+									   source.eval="{Params.user.minavatar}" source.view="{data.@evalavatar}"/>
+				<s:Label id="lblEvalUsername" width="60" height="25" textAlign="center"
+						 verticalAlign="middle"
+						 text.eval="{Params.profile.nickname}" text.view="{data.@evalusername}"/>
+			</s:VGroup>
+			<s:Label id="lblEvaluation" x="29" y="8" width="100%" height="100%" fontSize="14"
+					 paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"
+					 text="{data.@evaluation}" includeIn="view"/>
+			<s:HGroup includeIn="eval" width="100%" height="91"
+					  paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				<s:TextArea id="iptEval" width="100%" height="100%" borderColor="#999999"
+							fontSize="14" paddingTop="3" prompt="写下你的建议"/>
+				<component:LabelBorder id="btnEval" includeIn="eval" width="100" height="100%"
+									   backgroundColor="#B60003" borderAlpha="1.0"
+									   borderColor="#960003" borderVisible="true" borderWeight="1" cornerRadius="10"
+									   buttonMode="true" click="btnEval_clickHandler(event)"
+									   color="white"
+									   fontFamily="微软雅黑" fontSize="26" fontWeight="bold" text="点 评"
+									   textAlign="center" useHandCursor="true"
+									   verticalAlign="middle"/>
+			</s:HGroup>
+		</s:HGroup>
+	</s:BorderContainer>
+</component:Window>

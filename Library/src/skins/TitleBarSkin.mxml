@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009"
+			 xmlns:s="library://ns.adobe.com/flex/spark"
+			 xmlns:fb="http://ns.adobe.com/flashbuilder/2009"
+			 xmlns:mx="library://ns.adobe.com/flex/mx"
+			 minHeight="24"
+			 width="100%">
+	<fx:Metadata>
+		[HostComponent("spark.components.windowClasses.TitleBar")]
+	</fx:Metadata>
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+		<s:State name="normalAndMaximized" stateGroups="maximizedGroup"/>
+		<s:State name="disabledAndMaximized" stateGroups="maximizedGroup"/>
+	</s:states>
+	
+	<s:Rect id="background" left="0" right="0" top="0" bottom="0" radiusX="2" radiusY="2">
+		<s:fill>
+			<s:LinearGradient id="bgFill" rotation="90">
+				<s:GradientEntry color="#b60003"/>
+				<s:GradientEntry color="#960003"/>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	<s:Group left="5" right="5" width="100%" height="100%" minHeight="24">
+		<s:layout>
+			<s:HorizontalLayout gap="0" verticalAlign="middle"/>
+		</s:layout>
+		<s:BitmapImage id="titleIconImage" top="2" minWidth="0" fillMode="clip"
+					   source="@Embed('assets/icon_title.png')"
+					   width="16" height="16"/>
+		<s:Label id="titleText" width="100%" minWidth="0" color="white" fontSize="14"
+				 fontWeight="bold" maxDisplayedLines="1" paddingLeft="5"
+				 height="100%"/>
+		<s:Group height="100%" minHeight="24">
+			<s:layout>
+				<s:HorizontalLayout gap="5" verticalAlign="middle"/>
+			</s:layout>
+			<s:Button id="minimizeButton" top="0" bottom="2"
+					  skinClass="skins.button.MinimizeButtonSkin" verticalCenter="0"/>
+			<s:Button id="maximizeButton" skinClass="skins.button.MaximizeButtonSkin"
+					  verticalCenter="0"
+					  skinClass.maximizedGroup="skins.button.RestoreButtonSkin"/>
+			
+			<s:Button id="closeButton" skinClass="skins.button.CloseButtonSkin" verticalCenter="0"/>
+		</s:Group>
+	</s:Group>
+</s:SparkSkin>
