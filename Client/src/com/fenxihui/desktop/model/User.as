@@ -74,7 +74,7 @@ package com.fenxihui.desktop.model
 			user.logtime=request.user.@logtime.toString();
 
 			var setting:Object=Params.setting;
-			setting.title=request.user.setting.@title.toString();
+			setting.servday=request.user.setting.@servday.toString();
 
 			var profile:Object=Params.profile;
 			profile.nickname=request.user.profile.@nickname.toString();
@@ -96,6 +96,9 @@ package com.fenxihui.desktop.model
 			MainWindow.user=ObjectUtil.clone(user);
 			MainWindow.profile=ObjectUtil.clone(profile);
 			MainWindow.setting=ObjectUtil.clone(setting);
+			MainWindow.setFlicker('os',parseInt(request.remind.@os.toString()),false);
+			MainWindow.setFlicker('gold',parseInt(request.remind.@gold.toString()),false);
+			MainWindow.setFlicker('invest',parseInt(request.remind.@invest.toString()),false);
 			Main.setIconMenu(true);
 		}
 		private static function login_failed(request:XML):void{

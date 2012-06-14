@@ -5,9 +5,12 @@
 						  dataChange="dataChangeHandler(event)" focusEnabled="true">
 	<fx:Script>
 		<![CDATA[
-			import mx.events.FlexEvent;
+			import com.fenxihui.desktop.utils.Params;
 			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.window.MainWindow;
 			import com.fenxihui.desktop.view.window.OSViewWindow;
+			
+			import mx.events.FlexEvent;
 			
 			protected function view(sid:Number):void{
 				btnView.enabled=false;
@@ -25,6 +28,11 @@
 					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
 						btnView.enabled=true;
 					});
+					if(parseInt(data.@uid.toString())==Params.user.uid && !parseInt(data.@isread.toString())){
+						data.@isread=1;
+						data=data;
+						MainWindow.setFlicker('os',-1);
+					}
 				});
 				RemoteProxy.bind('Stock.View.Failed',function(request:XML):void{
 					ShowDialog(request.text(),false,function():void{
@@ -42,12 +50,19 @@
 				if(data.@iseval.toString()=='1'){
 					btnView.label="评论";
 				}else{
+					if(parseInt(data.@uid.toString())==Params.user.uid){
+						if(parseInt(data.@isread.toString())){
+							btnView.setStyle('fontWeight','normal');
+						}else{
+							btnView.setStyle('fontWeight','bold');
+						}
+					}
 					btnView.label="查看";
 				}
 			}
 		]]>
 	</fx:Script>
 	<mx:HBox width="100%" horizontalAlign="center">
-		<mx:Button id="btnView" width="60" label="查看" click="view(parseInt(data.@sid.toString()))"/>
+		<mx:Button id="btnView" width="60" label="查看" click="view(parseInt(data.@sid.toString()))" buttonMode="true" useHandCursor="true"/>
 	</mx:HBox>
 </s:MXDataGridItemRenderer>

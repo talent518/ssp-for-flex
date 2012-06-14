@@ -18,7 +18,7 @@
 			import mx.events.FlexEvent;
 			import mx.graphics.BitmapFill;
 			
-			private static var _loginWindow:LoginWindow;
+			private static var _loginWindow:LoginWindow=null;
 			public static function get loginWindow():LoginWindow{
 				if(!_loginWindow){
 					_loginWindow=new LoginWindow;
@@ -27,7 +27,7 @@
 			}
 			
 			public static function remove():void{
-				if(!_loginWindow)
+				if(!_loginWindow || !_loginWindow.nativeWindow)
 					return;
 				RegisterWindow.remove();
 				LostPasswdWindow.remove();

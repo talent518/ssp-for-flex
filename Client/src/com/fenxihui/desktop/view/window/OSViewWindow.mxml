@@ -85,7 +85,7 @@
 							refresh_list();
 						}
 					});
-						
+					MainWindow.setFlicker('os',-1);
 				});
 				RemoteProxy.bind('Stock.Eval.Failed',function(request:XML):void{
 					ShowDialog(request.text(),false,function():void{

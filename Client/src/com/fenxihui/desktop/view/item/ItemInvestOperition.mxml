@@ -2,12 +2,13 @@
 <s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
 						  xmlns:s="library://ns.adobe.com/flex/spark"
 						  xmlns:mx="library://ns.adobe.com/flex/mx"
-						  focusEnabled="true">
+						  dataChange="dataChangeHandler(event)" focusEnabled="true">
 	<fx:Script>
 		<![CDATA[
 			import com.fenxihui.desktop.utils.RemoteProxy;
 			import com.fenxihui.desktop.view.window.GoldViewWindow;
 			import com.fenxihui.desktop.view.window.InvestViewWindow;
+			import com.fenxihui.desktop.view.window.MainWindow;
 			
 			import mx.events.FlexEvent;
 			
@@ -27,6 +28,11 @@
 					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
 						btnView.enabled=true;
 					});
+					if(!parseInt(data.@isread.toString())){
+						data.@isread=1;
+						data=data;
+						MainWindow.setFlicker('invest',-1);
+					}
 				});
 				RemoteProxy.bind('Invest.View.Failed',function(request:XML):void{
 					ShowDialog(request.text(),false,function():void{
@@ -35,9 +41,21 @@
 				});
 				RemoteProxy.send('Invest.View',{iid:iid});
 			}
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(!data){
+					return;
+				}
+				if(parseInt(data.@isread.toString())){
+					btnView.setStyle('fontWeight','normal');
+				}else{
+					btnView.setStyle('fontWeight','bold');
+				}
+			}
 		]]>
 	</fx:Script>
 	<mx:HBox width="100%" horizontalAlign="center">
-		<mx:Button id="btnView" width="60" label="查看" click="view(parseInt(data.@iid.toString()))"/>
+		<mx:Button id="btnView" width="60" label="查看" buttonMode="true"
+				   click="view(parseInt(data.@iid.toString()))" useHandCursor="true"/>
 	</mx:HBox>
 </s:MXDataGridItemRenderer>

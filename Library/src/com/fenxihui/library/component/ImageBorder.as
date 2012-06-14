@@ -21,7 +21,6 @@ package com.fenxihui.library.component
 	public class ImageBorder extends Image
 	{
 		private var _mask:Sprite;
-		public var cornerRadius:uint=8;
 		private var tryTimes:int=0;
 		
 		[Embed(source="assets/default.png")]
@@ -57,7 +56,7 @@ package com.fenxihui.library.component
 			var h:Number = e.target.height;
 			_mask.graphics.clear();
 			_mask.graphics.beginFill(0x0);
-			_mask.graphics.drawRoundRect(0, 0,w,h,cornerRadius, cornerRadius);
+			_mask.graphics.drawRoundRect(0, 0,w,h,getStyle('cornerRadius'), getStyle('cornerRadius'));
 			_mask.graphics.endFill();
 			mask = _mask;
 		}

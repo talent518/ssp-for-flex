@@ -6,7 +6,10 @@ package com.fenxihui.desktop.utils
 	{
 		public static const SERVER_HOST:String="desktop.fenxihui.com";
 		public static const SERVER_PORT:uint=8086;
-		public static const SOCKET_DELAY:uint=10;
+		public static const SOCKET_DELAY:uint=5;
+		public static const SOCKET_TRY:uint=300;
+		
+		public static const UPLOAD_URL:String="http://soft.fenxihui.com/upload.php";
 
 		private static var _instance:Params=new Params;
 

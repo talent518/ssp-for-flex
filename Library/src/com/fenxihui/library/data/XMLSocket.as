@@ -21,6 +21,9 @@ package com.fenxihui.library.data
 		private var _port:uint;
 		private var socket:Socket;
 		
+		private var connectTime:Number;
+		private var connectDelay:Number;
+		
 		private var timer:Timer;
 		
 		private var events:Array;
@@ -73,6 +76,7 @@ package com.fenxihui.library.data
 		}
 		
 		public function connect():void{
+			connectTime=new Date().time;
 			socket.connect(_host,_port);
 		}
 		
@@ -116,6 +120,10 @@ package com.fenxihui.library.data
 			XML.prettyPrinting=true;
 			var bytes:ByteArray=new ByteArray();
 			var strXML:String=xml.toXMLString();
+			if(strXML.length<=0){
+				trace('strXML.length',strXML.length);
+				return;
+			}
 			bytes.writeInt(strXML.length);
 			bytes.writeUTFBytes(strXML);
 			socket.writeBytes(bytes);
@@ -134,6 +142,8 @@ package com.fenxihui.library.data
 		
 		private function connectHandler(event:Event):void {
 			//trace("connectHandler: " + event);
+			connectDelay=(new Date().time)-connectTime;
+			trace('Connect delay',connectDelay+'ms',(connectDelay/1000).toFixed(3)+'s');
 			timer.reset();
 			trigger(CONNECT,[event]);
 		}

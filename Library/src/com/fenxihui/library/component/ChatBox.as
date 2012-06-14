@@ -5,6 +5,7 @@ package com.fenxihui.library.component
 	import flash.display.DisplayObject;
 	import flash.display.Shader;
 	import flash.display.Sprite;
+	import flash.events.Event;
 	import flash.events.FocusEvent;
 	import flash.events.KeyboardEvent;
 	import flash.text.TextField;
@@ -13,6 +14,7 @@ package com.fenxihui.library.component
 	
 	import mx.controls.Alert;
 	import mx.core.UIComponent;
+	import mx.events.ResizeEvent;
 	import mx.managers.FocusManager;
 	import mx.managers.IFocusManagerComponent;
 	
@@ -20,6 +22,10 @@ package com.fenxihui.library.component
 	{
 		private var _rtf:RichTextField;
 		private var _scrollBar:UIScrollBar;
+		
+		public function get contentLength():int{
+			return textField.length;
+		}
 		
 		public function get lineHeight():int{
 			return _rtf.lineHeight;
@@ -63,7 +69,7 @@ package com.fenxihui.library.component
 		}		
 		public function set type(value:String):void{
 			_rtf.type=value;
-			if(_rtf.type=='input'){
+			if(_rtf.type==RichTextField.INPUT){
 				focusEnabled=true;
 				tabEnabled=true;
 				tabChildren=true;
@@ -76,8 +82,8 @@ package com.fenxihui.library.component
 			_rtf=new RichTextField;
 			_rtf.html=true;
 			_rtf.placeholderColor=0xffffff;
-			_rtf.percentHeight=100;
-			_rtf.percentWidth=100;
+			_rtf.placeholderMarginH=2;
+			_rtf.placeholderMarginV=0;
 			addChild(_rtf);
 			_scrollBar=new UIScrollBar;
 			_scrollBar.scrollTarget=_rtf.textfield;

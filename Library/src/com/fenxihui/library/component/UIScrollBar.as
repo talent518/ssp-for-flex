@@ -140,9 +140,9 @@ package com.fenxihui.library.component
 		 */
 		public function set scrollTarget(target:DisplayObject):void {
 			if (_scrollTarget != null) {
-				_scrollTarget.removeEventListener(Event.CHANGE,handleTargetChange,false);
-				_scrollTarget.removeEventListener(TextEvent.TEXT_INPUT,handleTargetChange,false);
-				_scrollTarget.removeEventListener(Event.SCROLL,handleTargetScroll,false);
+				_scrollTarget.removeEventListener(Event.CHANGE,handleTargetChange);
+				_scrollTarget.removeEventListener(TextEvent.TEXT_INPUT,handleTargetChange);
+				_scrollTarget.removeEventListener(Event.SCROLL,handleTargetScroll);
 			}
 			_scrollTarget = target;
 			

@@ -69,17 +69,67 @@
 						Loading.show(_mainWindow,0x0,0.5);
 					}
 					trace('Status:'+(status?'Online':'Offline'));
+				};
+				RemoteProxy.bind('Remind.OS',function(request:XML):void{
+					setFlicker('os',1);
+				});
+				RemoteProxy.bind('Remind.Gold',function(request:XML):void{
+					setFlicker('gold',1);
+				});
+				RemoteProxy.bind('Remind.Invest',function(request:XML):void{
+					setFlicker('invest',1);
+				});
+				flickers={
+					os:{target:fbOS,icon:Icons.OS,title:'操作系统',number:0},
+					gold:{target:fbGold,icon:Icons.Gold,title:'优选金股',number:0},
+					invest:{target:fbInvest,icon:Icons.Invest,title:'投资组合',number:0}/*,
+					broadcast:{target:fbBroadcast,icon:Icons.Broadcast,title:'盘中直播',number:0}*/
+				};
+				while(_flickers.length){
+					setFlicker.apply(null,_flickers.pop());
+				}
+			}
+			
+			private var flickers:Object;
+			private var _flickers:Array=[];
+			public static function setFlicker(type:String,number:int,isJoin:Boolean=true):void{
+				if(!_mainWindow.flickers){
+					_mainWindow._flickers.push([type,number,isJoin]);
+					return;
+				}
+				var f:Object=_mainWindow.flickers[type];
+				if(isJoin){
+					f.number+=number;
+				}else{
+					f.number=number;
+				}
+				(f.target as FunctionButton).number=f.number;
+				if(f.number>0){
+					Main.addFlickerQueue(type,f.icon,f.title+'('+number+')');
+				}else{
+					Main.removeFlickerQueue(type);
 				}
 			}
 			
 			[Bindable]
-			public static var user:Object;
-			
+			public var servday:String;
 			[Bindable]
-			public static var profile:Object;
-			
+			public var nickname:String;
 			[Bindable]
-			public static var setting:Object;
+			public var prevlogtime:String;
+			
+			public static function set user(value:Object):void{
+				_mainWindow.prevlogtime=value.prevlogtime;
+			}
+			
+			public static function set profile(value:Object):void{
+				_mainWindow.nickname=value.nickname;
+				
+			}
+			
+			public static function set setting(value:Object):void{
+				_mainWindow.servday=value.servday;
+			}
 			
 			protected function OS_clickHandler(event:MouseEvent):void
 			{
@@ -169,10 +219,10 @@
 								  paddingTop="15"/>
 			</s:layout>
 			<s:Label color="#b60002" fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
-					 text="欢迎您，{profile.nickname}，您的会员服务剩余{width}天。" textDecoration="none"
+					 text="欢迎您，{nickname}，您的会员服务剩余{servday}天。" textDecoration="none"
 					 verticalAlign="middle"/>
 			<s:Label color="#b60002" fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
-					 text="您上一次登录时间是：{user.prevlogtime}" textDecoration="none"
+					 text="您上一次登录时间是：{prevlogtime}" textDecoration="none"
 					 verticalAlign="middle"/>
 			<s:HGroup width="100%" height="40" gap="10">
 				<s:BorderContainer width="100%" height="100%" backgroundImage="{Icons.Search}"
@@ -194,102 +244,29 @@
 									   verticalAlign="middle"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   click="OS_clickHandler(event)" cornerRadius="10"
-								   useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image x="29" y="11" width="40" height="40" source="{Icons.OS}"/>
-					<s:Label x="164" y="30" width="100%" height="40" color="#b60002"
-							 fontFamily="微软雅黑" fontSize="22" fontWeight="bold" text="操作系统"
-							 textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true" click="Gold_clickHandler(event)">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.Gold}"/>
-					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="优选金股" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true" click="Invest_clickHandler(event)">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.Invest}"/>
-					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="投资组合" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
+				<component4:FunctionButton id="fbOS" width="100%" label="操作系统" click="OS_clickHandler(event)"
+										   icon="{Icons.OS}"/>
+				<component4:FunctionButton id="fbGold" width="100%" label="优选金股" click="Gold_clickHandler(event)"
+										   icon="{Icons.Gold}"/>
+				<component4:FunctionButton id="fbInvest" width="100%" label="投资组合"
+										   click="Invest_clickHandler(event)" icon="{Icons.Invest}"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true" click="Broadcast_clickHandler(event)">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image x="29" y="11" width="40" height="40" source="{Icons.Broadcast}"/>
-					<s:Label width="100%" height="40" color="#B60002" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="盘中直播" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.Consult}"/>
-					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="个股会诊" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.News}"/>
-					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="热点新闻" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
+				<component4:FunctionButton id="fbBroadcast" width="100%" label="盘中直播"
+										   click="Broadcast_clickHandler(event)"
+										   icon="{Icons.Broadcast}"/>
+				<component4:FunctionButton id="fbConsult" width="100%" label="个股会诊" enabled="false"
+										   icon="{Icons.Consult}"/>
+				<component4:FunctionButton id="fbNews" width="100%" label="热点新闻" enabled="false"
+										   icon="{Icons.News}"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image x="29" y="11" width="40" height="40" source="{Icons.Hot}"/>
-					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="热点板块" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.MustRead}"/>
-					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="每日必读" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
-				<s:BorderContainer width="100%" height="100%" borderColor="#DDDDDD" buttonMode="true"
-								   cornerRadius="10" useHandCursor="true">
-					<s:layout>
-						<s:HorizontalLayout paddingBottom="20" paddingLeft="20" paddingRight="20"
-											paddingTop="20"/>
-					</s:layout>
-					<s:Image width="40" height="40" source="{Icons.Pool}"/>
-					<s:Label width="100%" height="40" color="#999999" fontFamily="微软雅黑" fontSize="22"
-							 fontWeight="bold" text="股票池" textAlign="left" verticalAlign="middle"/>
-				</s:BorderContainer>
+				<component4:FunctionButton id="fbHot" width="100%" label="热点板块" enabled="false"
+										   icon="{Icons.Hot}"/>
+				<component4:FunctionButton id="fbMustRead" width="100%" label="每日必读" enabled="false"
+										   icon="{Icons.MustRead}"/>
+				<component4:FunctionButton id="fbPool" width="100%" label="股票池" enabled="false"
+										   icon="{Icons.Pool}"/>
 			</s:HGroup>
 		</s:BorderContainer>
 	</s:HGroup>

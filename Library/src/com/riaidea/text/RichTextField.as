@@ -6,8 +6,10 @@
 
 package com.riaidea.text
 {
+	import com.fenxihui.library.component.ImageBorder;
 	import com.riaidea.text.plugins.IRTFPlugin;
 	
+	import flash.display.Bitmap;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -19,6 +21,9 @@ package com.riaidea.text
 	import flash.utils.Dictionary;
 	import flash.utils.getDefinitionByName;
 	
+	import mx.controls.Image;
+	import mx.controls.SWFLoader;
+	import mx.core.Container;
 	import mx.core.UIComponent;
 	
 	
@@ -271,8 +276,23 @@ package com.riaidea.text
 		 */
 		public function insertSprite(newSprite:Object, index:int = -1, autoRender:Boolean = true, cache:Boolean = false):void
 		{
-			//create a instance of sprite
-			var spriteObj:DisplayObject = getSpriteFromObject(newSprite);
+			try{
+				//create a instance of sprite
+				var spriteObj:DisplayObject = getSpriteFromObject(newSprite);
+			}catch(e:ReferenceError){
+				var sl:SWFLoader=new SWFLoader;
+				sl.addEventListener(Event.COMPLETE,function(e:Event):void{
+					var bitmap:ImageRenderer=new ImageRenderer((sl.content as Bitmap).bitmapData);
+					bitmap.source=newSprite;
+					bitmap.name=String(index);
+					bitmap.width=sl.content.width;
+					bitmap.height=sl.content.height;
+					insertSprite(bitmap,index,autoRender,cache);
+				});
+				sl.load(newSprite);
+				return;
+			}
+
 			if (spriteObj == null) throw Error("Specific sprite:" + newSprite + " is not a valid display object!");
 			
 			if (cache) spriteObj.cacheAsBitmap = true;
@@ -300,6 +320,7 @@ package com.riaidea.text
 			
 			//if autoRender, just do it
 			if (autoRender) _spriteRenderer.render();
+			
 		}
 		
 		private function getSpriteFromObject(obj:Object):DisplayObject
@@ -307,7 +328,7 @@ package com.riaidea.text
 			if (obj is String) 
 			{
 				var clazz:Class = getDefinitionByName(String(obj)) as Class;
-				return new clazz() as DisplayObject;				
+				return new clazz() as DisplayObject;
 			}else if (obj is Class)
 			{
 				return new obj() as DisplayObject;

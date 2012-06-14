@@ -4,7 +4,7 @@
 				  xmlns:mx="library://ns.adobe.com/flex/mx"
 				  xmlns:component="com.fenxihui.library.component.*"
 				  width="610" height="474" layout="horizontal" paddingBottom="10" paddingLeft="10"
-				  paddingRight="10" paddingTop="10" creationComplete="initWindow(event)">
+				  paddingRight="10" paddingTop="10" creationComplete="initWindow(event)" title="盘中直播历史记录">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
@@ -47,10 +47,7 @@
 					}
 				});
 				RemoteProxy.bind('Broadcast.History.Failed',function(request:XML):void{
-					var msg:XML;
-					for each(msg in request.message){
-						appendHistoryMessage(msg);
-					}
+					ShowDialog(request.text(),false);
 				});
 				RemoteProxy.send('Broadcast.History',{date:date});
 			}
@@ -71,7 +68,9 @@
 					}
 				});
 				RemoteProxy.bind('Broadcast.Date.Failed',function(request:XML):void{
-					Loading.hide(listDate);
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(listDate);
+					});
 				});
 				Loading.show(listDate,0x0,0.5);
 				RemoteProxy.send('Broadcast.Date',{});

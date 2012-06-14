@@ -3,19 +3,6 @@ package
 	import mx.core.UIComponent;
 
 	public class Icons{
-
-		//窗口操作图标
-		[Embed(source="assets/icon-minimize.png")]
-		[Bindable]
-		public static var Minimize:Class;
-
-		[Embed(source="assets/icon-maximize.png")]
-		[Bindable]
-		public static var Maximize:Class;
-
-		[Embed(source="assets/icon-close.png")]
-		[Bindable]
-		public static var Close:Class;
 		
 		//内容标示图标
 		[Embed(source="assets/icon-search.png")]

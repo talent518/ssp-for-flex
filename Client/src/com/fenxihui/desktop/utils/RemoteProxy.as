@@ -4,6 +4,9 @@ package com.fenxihui.desktop.utils
 	import com.fenxihui.desktop.view.Loading;
 	import com.fenxihui.library.data.XMLSocket;
 	
+	import flash.events.TimerEvent;
+	import flash.utils.Timer;
+	
 	public class RemoteProxy
 	{
 		public static const LOGIN:String='login';
@@ -14,6 +17,7 @@ package com.fenxihui.desktop.utils
 		
 		private static var _instance:RemoteProxy=new RemoteProxy;
 		
+		private var timers:Array;
 		private var sendQueues:Array;
 		private var events:Array;
 		private var socket:XMLSocket;
@@ -26,10 +30,11 @@ package com.fenxihui.desktop.utils
 				throw new Error("RemoteProxy can only be accessed through RemoteProxy.getInstance()");
 				return;
 			}
+			timers=new Array();
 			sendQueues=new Array();
 			events=new Array();
 
-			socket=new XMLSocket(Params.SERVER_HOST,Params.SERVER_PORT,Params.SOCKET_DELAY);
+			socket=new XMLSocket(Params.SERVER_HOST,Params.SERVER_PORT,Params.SOCKET_DELAY,Params.SOCKET_TRY);
 			socket.bind(XMLSocket.DATA,Receive);
 			socket.bind(XMLSocket.CONNECT,function(e:Object):void{
 				trace('Connected',sendQueues.length);
@@ -94,9 +99,16 @@ package com.fenxihui.desktop.utils
 			_instance.events[type]=func;
 		}
 		public static function trigger(type:String,xml:XML):void{
-			if(typeof(_instance.events[type])=='function')
+			if(typeof(_instance.events[type])=='function'){
 				_instance.events[type].call(null,xml);
-			else
+				
+				var _type:String=type.substring(0,type.lastIndexOf('.'));
+				if(_instance.timers[_type]){
+					trace(_type);
+					(_instance.timers[_type] as Timer).reset();
+					delete _instance.timers[_type];
+				}
+			}else
 				trace(type,xml);
 		}
 		public static function send(type:String,params:Object,moreArg:Object=null):void{
@@ -106,6 +118,16 @@ package com.fenxihui.desktop.utils
 			var xml:XML=ObjectToXML(data,"request");
 			if(_instance.socket.connected){
 				_instance.socket.send(XML('<request type="Connect.Data">'+Crypter.encode(xml.toXMLString(),_instance.sendKey)+'</request>'));
+				if(!_instance.timers[type] && _instance.events[type+'.Failed']){
+					var timer:Timer=new Timer(1000,10);
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
+						var xml:XML=<response>服务器没有响应！请稍后重试！</response>;
+						xml.@type=type+'.Failed'
+						trigger(type+'.Failed',xml);
+					});
+					timer.start();
+					_instance.timers[type]=timer;
+				}
 			}else{
 				_instance.sendQueues.push(xml);
 				_instance.socket.connect();
