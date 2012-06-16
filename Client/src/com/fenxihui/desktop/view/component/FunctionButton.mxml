@@ -2,7 +2,7 @@
 <s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009"
 				   xmlns:s="library://ns.adobe.com/flex/spark"
 				   xmlns:mx="library://ns.adobe.com/flex/mx"
-				   borderColor="#DDDDDD" buttonMode="true" cornerRadius="10" useHandCursor="true">
+				   borderColor="#DDDDDD" buttonMode="true" cornerRadius="10" useHandCursor="true" toolTipCreate="toolTipCreateHandler(event)">
 	<s:states>
 		<s:State name="enabled"/>
 		<s:State name="disabled"/>
@@ -15,6 +15,7 @@
 			import flash.filters.ColorMatrixFilter;
 			
 			import mx.events.FlexEvent;
+			import mx.events.ToolTipEvent;
 
 			[Bindable]
 			public var label:String;
@@ -36,6 +37,14 @@
 					currentState='disabled';
 				}
 			}
+			
+			protected function toolTipCreateHandler(e:ToolTipEvent):void
+			{
+				var tip:PanlToolTip = new PanlToolTip();
+				tip.title = label;
+				e.toolTip = tip;
+			}
+			
 		]]>
 	</fx:Script>
 	<s:HGroup width="100%" paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20"

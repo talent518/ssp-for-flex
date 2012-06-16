@@ -255,8 +255,7 @@
 				<s:Label height="100%" paddingLeft="5" paddingRight="5" text="行数/页"
 						 verticalAlign="middle"/>
 			</mx:HBox>
-			<s:CheckBox id="chkIsToday" height="100%" label="只显示今天" change="refresh_list()"
-						selected="true"/>
+			<s:CheckBox id="chkIsToday" height="100%" label="只显示今天" change="refresh_list()"/>
 			<component:LabelBorder id="refreshGold" height="100%" backgroundAlpha="1.0"
 								   backgroundColor="#b60002" borderColor="#960003"
 								   borderVisible="true" borderWeight="1" buttonMode="true"

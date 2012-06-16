@@ -12,6 +12,9 @@
 		global{
 			fontFamily:'宋体','Courier New';
 		}
+		.ToolTip{
+			fontSize:14px;
+		}
 	</mx:Style>
 	<mx:Script>
 		<![CDATA[
@@ -47,6 +50,7 @@
 			import mx.events.DragEvent;
 			import mx.events.EffectEvent;
 			import mx.events.FlexNativeMenuEvent;
+			import mx.managers.ToolTipManager;
 			import mx.utils.Base64Decoder;
 			import mx.utils.Base64Encoder;
 			import mx.utils.UIDUtil;
@@ -207,6 +211,7 @@
 					dock.addEventListener(Event.ACTIVATE,OpenMainPanel);
 				}
 				trayToolTip="全能股市操盘系统";
+				
 				_main=this;
 				RemoteProxy.bind('User.Login',function(request:XML):void{
 					MainWindow.remove();
@@ -226,10 +231,12 @@
 			private function OpenMainPanel(e:*=null):void{
 				with(Params.isLogined?MainWindow.mainWindow:LoginWindow.loginWindow){
 					open(true); 
+					alwaysInFront=true;
 					nativeWindow.activate();
 					nativeWindow.restore();
 					nativeWindow.orderToFront();
 					center();
+					alwaysInFront=false;
 				}
 			}
 			private function onSelectMenuItem(e:FlexNativeMenuEvent):void{

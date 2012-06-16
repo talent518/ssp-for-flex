@@ -58,7 +58,7 @@
 				});
 				addEventListener(Event.CLOSING,function(e:Event):void{
 					e.preventDefault();
-					nativeWindow.visible=false;
+					visible=false;
 				});
 				
 				Main.setActiveAccount(Params.profile.nickname);
@@ -131,9 +131,11 @@
 				_mainWindow.servday=value.servday;
 			}
 			
-			protected function OS_clickHandler(event:MouseEvent):void
+			protected function fbOS_clickHandler(event:MouseEvent):void
 			{
+				Loading.show(fbOS);
 				RemoteProxy.bind('Stock.State.Succeed',function(request:XML):void{
+					Loading.hide(fbOS);
 					with(OSWindow.osWindow){
 						open(true);
 						nativeWindow.activate();
@@ -144,14 +146,18 @@
 					}
 				});
 				RemoteProxy.bind('Stock.State.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false);
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(fbOS);
+					});
 				});
 				RemoteProxy.send('Stock.State',{});
 			}
 			
-			protected function Broadcast_clickHandler(event:MouseEvent):void
+			protected function fbBroadcast_clickHandler(event:MouseEvent):void
 			{
+				Loading.show(fbBroadcast);
 				RemoteProxy.bind('Broadcast.State.Succeed',function(request:XML):void{
+					Loading.hide(fbBroadcast);
 					with(BroadcastWindow.broadcastWindow){
 						open(true);
 						nativeWindow.activate();
@@ -159,17 +165,22 @@
 						nativeWindow.orderToFront();
 						center();
 						currentState=request.@state.toString();
+						sendKey=request.@sendKey.toString();
 					}
 				});
 				RemoteProxy.bind('Broadcast.State.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false);
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(fbBroadcast);
+					});
 				});
 				RemoteProxy.send('Broadcast.State',{});
 			}
 			
-			protected function Gold_clickHandler(event:MouseEvent):void
+			protected function fbGold_clickHandler(event:MouseEvent):void
 			{
+				Loading.show(fbGold);
 				RemoteProxy.bind('Gold.State.Succeed',function(request:XML):void{
+					Loading.hide(fbGold);
 					with(GoldWindow.goldWindow){
 						open(true);
 						nativeWindow.activate();
@@ -180,14 +191,18 @@
 					}
 				});
 				RemoteProxy.bind('Gold.State.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false);
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(fbGold);
+					});
 				});
 				RemoteProxy.send('Gold.State',{});
 			}
 			
-			protected function Invest_clickHandler(event:MouseEvent):void
+			protected function fbInvest_clickHandler(event:MouseEvent):void
 			{
+				Loading.show(fbInvest);
 				RemoteProxy.bind('Invest.State.Succeed',function(request:XML):void{
+					Loading.hide(fbInvest);
 					with(InvestWindow.investWindow){
 						open(true);
 						nativeWindow.activate();
@@ -198,7 +213,9 @@
 					}
 				});
 				RemoteProxy.bind('Invest.State.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false);
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(fbInvest);
+					});
 				});
 				RemoteProxy.send('Invest.State',{});
 			}
@@ -222,8 +239,7 @@
 					 text="欢迎您，{nickname}，您的会员服务剩余{servday}天。" textDecoration="none"
 					 verticalAlign="middle"/>
 			<s:Label color="#b60002" fontFamily="微软雅黑" fontSize="16" fontWeight="bold"
-					 text="您上一次登录时间是：{prevlogtime}" textDecoration="none"
-					 verticalAlign="middle"/>
+					 text="您上一次登录时间是：{prevlogtime}" textDecoration="none" verticalAlign="middle"/>
 			<s:HGroup width="100%" height="40" gap="10">
 				<s:BorderContainer width="100%" height="100%" backgroundImage="{Icons.Search}"
 								   backgroundImageFillMode="clip" borderColor="#CA0204"
@@ -244,17 +260,21 @@
 									   verticalAlign="middle"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
-				<component4:FunctionButton id="fbOS" width="100%" label="操作系统" click="OS_clickHandler(event)"
-										   icon="{Icons.OS}"/>
-				<component4:FunctionButton id="fbGold" width="100%" label="优选金股" click="Gold_clickHandler(event)"
-										   icon="{Icons.Gold}"/>
+				<component4:FunctionButton id="fbOS" width="100%" label="操作系统"
+										   click="fbOS_clickHandler(event)" icon="{Icons.OS}"
+										   toolTip="发布您的股票操作记录，我们会为您的操作提供技术支持，并即时提醒您，我们为您的操作做出的点评"/>
+				<component4:FunctionButton id="fbGold" width="100%" label="优选金股"
+										   click="fbGold_clickHandler(event)" icon="{Icons.Gold}"
+										   toolTip="有新的优选金股会即时提醒您"/>
 				<component4:FunctionButton id="fbInvest" width="100%" label="投资组合"
-										   click="Invest_clickHandler(event)" icon="{Icons.Invest}"/>
+										   click="fbInvest_clickHandler(event)"
+										   icon="{Icons.Invest}" toolTip="有新的投资组合会即时提醒您"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
 				<component4:FunctionButton id="fbBroadcast" width="100%" label="盘中直播"
-										   click="Broadcast_clickHandler(event)"
-										   icon="{Icons.Broadcast}"/>
+										   click="fbBroadcast_clickHandler(event)"
+										   icon="{Icons.Broadcast}"
+										   toolTip="只有在您打开盘中直播窗口时，有新消息才能即时提醒到您"/>
 				<component4:FunctionButton id="fbConsult" width="100%" label="个股会诊" enabled="false"
 										   icon="{Icons.Consult}"/>
 				<component4:FunctionButton id="fbNews" width="100%" label="热点新闻" enabled="false"

@@ -116,6 +116,9 @@ package com.fenxihui.desktop.utils
 			for(var k:String in moreArg)
 				data[k]=moreArg[k];
 			var xml:XML=ObjectToXML(data,"request");
+			if(!_instance.socket.connected){
+				_instance.socket.connect();
+			}
 			if(_instance.socket.connected){
 				_instance.socket.send(XML('<request type="Connect.Data">'+Crypter.encode(xml.toXMLString(),_instance.sendKey)+'</request>'));
 				if(!_instance.timers[type] && _instance.events[type+'.Failed']){

@@ -59,6 +59,23 @@
 			private var oldMaxHeight:Number=0;
 			
 			private static var _broadcastWindow:BroadcastWindow;
+
+			private var _sendKey:String='Click';
+
+			public function get sendKey():String
+			{
+				return _sendKey;
+			}
+
+			public function set sendKey(value:String):void
+			{
+				if(_sendKey==value)
+					return;
+				sendMenu.(attribute('name')==_sendKey).@toggled=false;
+				_sendKey = value;
+				sendMenu.(attribute('name')==value).@toggled=true;
+			}
+
 			public static function get broadcastWindow():BroadcastWindow{
 				if(!_broadcastWindow){
 					_broadcastWindow=new BroadcastWindow;
@@ -239,6 +256,7 @@
 			public function readMessage():void{
 				RemoteProxy.bind('Broadcast.Receive',function(request:XML):void{
 					appendOutputMessage(XML(request.message));
+					nativeWindow.notifyUser(NotificationType.CRITICAL);
 					Main.addFlickerQueue('broadcast',Icons.Broadcast,'盘中直播收到新消息');
 					setTimeout(function():void{
 						Main.removeFlickerQueue('broadcast');
@@ -269,7 +287,6 @@
 			
 			private static const urlRegExp:RegExp=new RegExp("((?:http|ftp|https)://)([a-z0-9_-]+\.[a-z0-9_-]+)(\.[a-z0-9_-]*)((\&amp\;|\%[0-9a-z]{2}|[\.\/\?\&\=a-z0-9_-])*)", "ig");
 			private static const reValue:String="<a href='$1$2$3' target='_blank'><font color=\"#0072c1\"><b><i>$1$2$3$4</i></b></font></a>";
-			private var sendKey:String;
 			
 			protected function btnSend_clickHandler(event:MouseEvent):void{
 				if(rtfInput.contentLength<=0){
@@ -328,7 +345,11 @@
 			
 			protected function btnSend_itemClickHandler(event:MenuEvent):void
 			{
+				var __sendKey:String=sendKey;
 				sendKey=event.item.@name.toString();
+				if(__sendKey!=sendKey){
+					RemoteProxy.send('Broadcast.SendKey',{key:sendKey});
+				}
 			}
 			
 			protected function rtfInput_keyDownHandler(event:KeyboardEvent):void
