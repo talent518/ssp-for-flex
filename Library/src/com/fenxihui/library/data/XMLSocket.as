@@ -97,22 +97,6 @@ package com.fenxihui.library.data
 			else
 				trace(args);
 		}
-		
-		public function int4_to_string(num:int):String{
-			var str:String='',i:int;
-			for(i=0;i<4;i++){
-				str+=String.fromCharCode((num>>(i*8))&0xff);
-			}
-			return str;
-		}
-		
-		public function string_to_int4(str:String):int{
-			var num:int=0,i:int;
-			for(i=0;i<4;i++){
-				num+=((str.charCodeAt(i)&0xff)<<(i*8));
-			}
-			return num;
-		}
 
 		public function send(xml:XML):void {
 			var prettyIndent:int=XML.prettyIndent,prettyPrinting:Boolean=XML.prettyPrinting;
@@ -131,6 +115,12 @@ package com.fenxihui.library.data
 			bytes=null;
 			XML.prettyIndent=prettyIndent;
 			XML.prettyPrinting=prettyPrinting;
+		}
+		
+		public function clearBuffer():void{
+			recvBuffer.clear();
+			recvedLength=0;
+			recvLength=0;
 		}
 		
 		private function closeHandler(event:Event):void {
@@ -154,7 +144,7 @@ package com.fenxihui.library.data
 			{
 				if(recvedLength==0){
 					recvLength=socket.readInt();
-					if(recvLength<0){
+					if(recvLength<=0){
 						return;
 					}
 					socket.readBytes(recvBuffer,recvedLength,socket.bytesAvailable>recvLength?recvLength:socket.bytesAvailable);
@@ -167,6 +157,8 @@ package com.fenxihui.library.data
 					recvBuffer.clear();
 					recvedLength=0;
 					recvLength=0;
+				}else{
+					trace('recvBuffer:',recvBuffer.toString());
 				}
 			}
 			if(recvedLength>0){

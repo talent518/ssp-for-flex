@@ -72,7 +72,6 @@ package com.fenxihui.desktop.utils
 		private function Receive(xmlist:XMLList):void
 		{
 			var type:String,_xml:XML;
-			trace(xmlist);
 			for each(var xml:XML in xmlist){
 				switch(xml.@type.toString()){
 					case 'Connect.Key':
@@ -104,7 +103,6 @@ package com.fenxihui.desktop.utils
 				
 				var _type:String=type.substring(0,type.lastIndexOf('.'));
 				if(_instance.timers[_type]){
-					trace(_type);
 					(_instance.timers[_type] as Timer).reset();
 					delete _instance.timers[_type];
 				}
@@ -124,8 +122,9 @@ package com.fenxihui.desktop.utils
 				if(!_instance.timers[type] && _instance.events[type+'.Failed']){
 					var timer:Timer=new Timer(1000,10);
 					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
+						_instance.socket.clearBuffer();
 						var xml:XML=<response>服务器没有响应！请稍后重试！</response>;
-						xml.@type=type+'.Failed'
+						xml.@type=type+'.Failed';
 						trigger(type+'.Failed',xml);
 					});
 					timer.start();

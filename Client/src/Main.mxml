@@ -203,12 +203,18 @@
 					NativeApplication.nativeApplication.autoExit = false;
 					var tray:SystemTrayIcon = NativeApplication.nativeApplication.icon as SystemTrayIcon;
 					tray.menu = iconMenu.nativeMenu;
-					tray.addEventListener(ScreenMouseEvent.CLICK,OpenMainPanel);
+					tray.addEventListener(ScreenMouseEvent.CLICK,function(e:ScreenMouseEvent):void{
+						e.preventDefault();
+						OpenMainPanel();
+					});
 				}
 				if (NativeApplication.supportsDockIcon){
 					var dock:DockIcon = NativeApplication.nativeApplication.icon as DockIcon;
 					dock.menu = iconMenu.nativeMenu;
-					dock.addEventListener(Event.ACTIVATE,OpenMainPanel);
+					dock.addEventListener(Event.ACTIVATE,function(e:Event):void{
+						e.preventDefault();
+						OpenMainPanel();
+					});
 				}
 				trayToolTip="全能股市操盘系统";
 				
@@ -228,15 +234,14 @@
 				});
 				checkForUpdate();
 			}
-			private function OpenMainPanel(e:*=null):void{
+			private function OpenMainPanel():void{
+				trace('OpenMainPanel');
 				with(Params.isLogined?MainWindow.mainWindow:LoginWindow.loginWindow){
-					open(true); 
-					alwaysInFront=true;
+					open(true);
 					nativeWindow.activate();
 					nativeWindow.restore();
 					nativeWindow.orderToFront();
 					center();
-					alwaysInFront=false;
 				}
 			}
 			private function onSelectMenuItem(e:FlexNativeMenuEvent):void{

@@ -99,6 +99,7 @@ package com.fenxihui.desktop.model
 			MainWindow.setFlicker('os',parseInt(request.remind.@os.toString()),false);
 			MainWindow.setFlicker('gold',parseInt(request.remind.@gold.toString()),false);
 			MainWindow.setFlicker('invest',parseInt(request.remind.@invest.toString()),false);
+			MainWindow.setFlicker('consult',parseInt(request.remind.@consult.toString()),false);
 			Main.setIconMenu(true);
 		}
 		private static function login_failed(request:XML):void{

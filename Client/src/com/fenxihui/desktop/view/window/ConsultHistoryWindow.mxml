@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="610" height="474" layout="horizontal" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" creationComplete="initWindow(event)" title="与“{nickname}”的对话记录">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.Loading;
+			
+			import mx.events.FlexEvent;
+			
+			public var userId:uint;
+			
+			[Bindable]
+			public var nickname:String;
+
+			public function appendHistoryMessage(msg:XML):void{
+				var xml:XML=XML(msg.message);
+				cbHistory.append('<p align="left"><font size="14" color="'+(parseInt(msg.@from_uid.toString())==Params.user.uid?'#008040':'#0022ee')+'"><b>'+msg.@nickname.toString()+'</b>&#32;&#32;'+msg.@dateline.toString()+'</font></p>');
+				xml.htmlText='<textformat leftmargin="24px">'+xml.htmlText+'</textformat>';
+				cbHistory.importXML(xml);
+			}
+			
+			public function readHistoryMessage(date:String=''):void{
+				RemoteProxy.bind('Consult.History.Succeed',function(request:XML):void{
+					cbHistory.clear();
+					var msg:XML;
+					for each(msg in request.message){
+						appendHistoryMessage(msg);
+					}
+				});
+				RemoteProxy.bind('Consult.History.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Consult.History',{userId:userId,date:date});
+			}
+
+			protected function initWindow(event:FlexEvent):void
+			{
+				RemoteProxy.bind('Consult.Date.Succeed',function(request:XML):void{
+					var dates:XMLList=XMLList(request.date);
+					Loading.hide(listDate);
+					listDate.dataProvider=dates;
+					listDate.selectedIndex=0;
+					if(dates && dates.length){
+						readHistoryMessage(dates[0].@dateday.toString());
+					}
+				});
+				RemoteProxy.bind('Consult.Date.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(listDate);
+					});
+				});
+				Loading.show(listDate,0x0,0.5);
+				RemoteProxy.send('Consult.Date',{userId:userId});
+			}
+		]]>
+	</fx:Script>
+	<mx:Tree id="listDate" width="166" height="100%"
+			 itemRenderer="com.fenxihui.desktop.view.item.ItemBroadcastHistoryDate" rowHeight="30"
+			 change="readHistoryMessage(listDate.selectedItem.@dateday.toString())"/>
+	<s:BorderContainer width="100%" height="100%">
+		<s:layout>
+			<s:VerticalLayout/>
+		</s:layout>
+		<component:ChatBox id="cbHistory" width="100%" height="100%"/>
+	</s:BorderContainer>
+</component:Window>

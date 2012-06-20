@@ -7,11 +7,7 @@
 				   width="590" height="472" minWidth="535" minHeight="440"
 				   creationComplete="initWindow();" frameRate="5" horizontalGap="5"
 				   layout="horizontal" paddingBottom="5" paddingLeft="5" paddingRight="5"
-				   paddingTop="5">
-	<component:states>
-		<s:State name="normal"/>
-		<s:State name="add"/>
-	</component:states>
+				   paddingTop="5" title="正在与“{nickname}”对话中……">
 	<fx:Declarations>
 		<fx:XMLList id="sendMenu">
 			<menuitem label="单击发送按钮发消息" groupName="send" name="Click" toggled="true" type="radio"/>
@@ -57,7 +53,12 @@
 			private var oldHeight:Number=0;
 			private var oldMaxHeight:Number=0;
 			
-			private static var _broadcastWindow:BroadcastWindow;
+			private static var _consultWindow:ConsultWindow;
+			
+			public var userId:uint;
+			
+			[Bindable]
+			public var nickname:String;
 
 			private var _sendKey:String='Click';
 
@@ -75,20 +76,20 @@
 				sendMenu.(attribute('name')==value).@toggled=true;
 			}
 
-			public static function get broadcastWindow():BroadcastWindow{
-				if(!_broadcastWindow){
-					_broadcastWindow=new BroadcastWindow;
+			public static function get consultWindow():ConsultWindow{
+				if(!_consultWindow){
+					_consultWindow=new ConsultWindow;
 				}
-				return _broadcastWindow;
+				return _consultWindow;
 			}
 			
 			public static function remove():void{
-				if(!_broadcastWindow)
+				if(!_consultWindow)
 					return;
-				_broadcastWindow.nativeWindow.close();
-				_broadcastWindow.removeAllChildren();
-				_broadcastWindow.removeAllElements();
-				_broadcastWindow=null;
+				_consultWindow.nativeWindow.close();
+				_consultWindow.removeAllChildren();
+				_consultWindow.removeAllElements();
+				_consultWindow=null;
 			}
 			
 			[Bindable]
@@ -113,15 +114,15 @@
 				stage.frameRate=10;
 				addEventListener(Event.CLOSE,function(e:Event):void{
 					e.preventDefault();
-					RemoteProxy.bind('Broadcast.Close.Succeed',function(request:XML):void{
+					RemoteProxy.bind('Consult.Close.Succeed',function(request:XML):void{
 						remove();
 					});
-					RemoteProxy.bind('Broadcast.Close.Failed',function(request:XML):void{
+					RemoteProxy.bind('Consult.Close.Failed',function(request:XML):void{
 						ShowDialog(request.text(),false,function():void{
 							remove();
 						});
 					});
-					RemoteProxy.send('Broadcast.Close',{uid:Params.user.uid});
+					RemoteProxy.send('Consult.Close',{userId:userId});
 				});
 				readMessage();
 				
@@ -137,7 +138,7 @@
 
 				urlRequest = new URLRequest(Params.UPLOAD_URL);
 				urlRequest.method=URLRequestMethod.POST;
-				urlRequest.data='path=broadcast&uid='+Params.user.uid+'&password='+Params.user.password;
+				urlRequest.data='path=consult&uid='+Params.user.uid+'&password='+Params.user.password;
 				fileReference = new FileReference();
 				fileReference.addEventListener(Event.SELECT, function(e:Event):void{
 					trace("文件:"+fileReference.name+"      "+"大小:"+fileReference.size+"字节");
@@ -247,41 +248,33 @@
 			
 			public function appendOutputMessage(msg:XML):void{
 				var xml:XML=XML(msg.message);
-				rtfOutput.append('<p align="left"><font size="14" color="'+(parseInt(msg.@uid.toString())==Params.user.uid?'#008040':'#0022ee')+'"><b>'+msg.@nickname.toString()+'</b>&#32;&#32;'+msg.@dateline.toString()+'</font></p>');
+				rtfOutput.append('<p align="left"><font size="14" color="'+(parseInt(msg.@from_uid.toString())==Params.user.uid?'#008040':'#0022ee')+'"><b>'+msg.@nickname.toString()+'</b>&#32;&#32;'+msg.@dateline.toString()+'</font></p>');
 				xml.htmlText='<textformat leftmargin="24px">'+xml.htmlText+'</textformat>';
 				rtfOutput.importXML(xml);
 			}
 			
 			public function readMessage():void{
-				RemoteProxy.bind('Broadcast.Receive',function(request:XML):void{
+				RemoteProxy.bind('Consult.Receive',function(request:XML):void{
 					appendOutputMessage(XML(request.message));
 					nativeWindow.notifyUser(NotificationType.CRITICAL);
-					Main.addFlickerQueue('broadcast',Icons.Broadcast,'盘中直播收到新消息');
+					Main.addFlickerQueue('consult',Icons.Broadcast,"收到来自“"+nickname+"”的信息");
 					setTimeout(function():void{
-						Main.removeFlickerQueue('broadcast');
+						Main.removeFlickerQueue('consult');
 					},3000);
 				});
-				RemoteProxy.bind('Broadcast.Open.Succeed',function(rqt:XML):void{
-					title='盘中直播正在收听中…';
-					RemoteProxy.bind('Broadcast.History.Succeed',function(request:XML):void{
-						var msg:XML;
-						for each(msg in request.message){
-							appendOutputMessage(msg);
-						}
-					});
-					RemoteProxy.bind('Broadcast.History.Failed',function(request:XML):void{
-						ShowDialog(request.text(),false,function():void{
-							title='盘中直播收听失败！';
-						});
-					});
-					RemoteProxy.send('Broadcast.History',{});
+				RemoteProxy.bind('Consult.Open.Succeed',function(request:XML):void{
+					var msg:XML;
+					var _num:int;
+					for each(msg in request.message){
+						appendOutputMessage(msg);
+						_num--;
+					}
+					MainWindow.setFlicker('consult',_num);
 				});
-				RemoteProxy.bind('Broadcast.Open.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false,function():void{
-						title='盘中直播收听失败！';
-					});
+				RemoteProxy.bind('Consult.Open.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false);
 				});
-				RemoteProxy.send('Broadcast.Open',{});
+				RemoteProxy.send('Consult.Open',{userId:userId});
 			}
 			
 			private static const urlRegExp:RegExp=new RegExp("((?:http|ftp|https)://)([a-z0-9_-]+\.[a-z0-9_-]+)(\.[a-z0-9_-]*)((\&amp\;|\%[0-9a-z]{2}|[\.\/\?\&\=a-z0-9_-])*)", "ig");
@@ -302,7 +295,7 @@
 				lblSendStatus.setStyle('color',0x0300b6);
 				lblSendStatus.text='正在发送中…';
 				lblSendStatus.visible=true;
-				RemoteProxy.bind('Broadcast.Send.Succeed',function(request:XML):void{
+				RemoteProxy.bind('Consult.Send.Succeed',function(request:XML):void{
 					rtfOutput.append('<p align="left"><font size="14" color="#008040"><b>'+Params.profile.nickname+'</b>&#32;&#32;'+now()+'</font></p>');
 					xml.htmlText='<textformat leftmargin="24px">'+xml.htmlText.toString()+'</textformat>';
 					rtfOutput.importXML(xml);
@@ -315,7 +308,7 @@
 					},5000);
 					btnSend.enabled=true;
 				});
-				RemoteProxy.bind('Broadcast.Send.Failed',function(request:XML):void{
+				RemoteProxy.bind('Consult.Send.Failed',function(request:XML):void{
 					lblSendStatus.setStyle('color',0xb60003);
 					lblSendStatus.text=request.text();
 					lblSendStatus.visible=true;
@@ -325,7 +318,7 @@
 					btnSend.enabled=true;
 				});
 				btnSend.enabled=false;
-				RemoteProxy.send('Broadcast.Send',{message:xml});
+				RemoteProxy.send('Consult.Send',{userId:userId,message:xml});
 			}
 			
 			protected function rtfInput_focusInHandler(event:FocusEvent):void
@@ -391,14 +384,17 @@
 				rtfInput.textField.setTextFormat(rtfInput.defaultTextFormat,beginIndex,endIndex);
 			}
 			
+			private var historyWindow:ConsultHistoryWindow=new ConsultHistoryWindow;
 			protected function btnHistory_clickHandler(event:MouseEvent):void
 			{
-				with(BroadcastHistoryWindow.broadcastHistoryWindow){
+				with(historyWindow){
 					open(true);
 					nativeWindow.activate();
 					nativeWindow.restore();
 					nativeWindow.orderToFront();
 					center();
+					userId=this.userId;
+					nickname=this.nickname;
 				}
 			}
 			
@@ -410,9 +406,8 @@
 			<s:VerticalLayout gap="0"/>
 		</s:layout>
 		<component1:ChatBox id="rtfOutput" width="100%" height="100%" autoScroll="true"/>
-		<mx:HRule id="hRuleResizeInputHeight1" includeIn="add" width="100%" strokeColor="#cccccc"/>
-		<s:HGroup includeIn="add" width="100%" height="30" paddingLeft="20" paddingRight="20"
-				  verticalAlign="middle">
+		<mx:HRule id="hRuleResizeInputHeight1" width="100%" strokeColor="#cccccc"/>
+		<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20" verticalAlign="middle">
 			<mx:PopUpButton id="popUpButton_pic" width="50" icon="@Embed('assets/smileys.png')"
 							openAlways="true" toolTip="请选择表情图片">
 				<mx:popUp>
@@ -469,12 +464,12 @@
 			<s:Label id="lblSendStatus" width="100%" fontSize="14" fontWeight="bold"
 					 textAlign="right" verticalAlign="middle"/>
 		</s:HGroup>
-		<mx:HRule id="hRuleResizeInputHeight2" includeIn="add" width="100%" strokeColor="#cccccc"/>
-		<component1:ChatBox id="rtfInput" includeIn="add" width="100%" height="100" autoScroll="true"
+		<mx:HRule id="hRuleResizeInputHeight2" width="100%" strokeColor="#cccccc"/>
+		<component1:ChatBox id="rtfInput" width="100%" height="100" autoScroll="true"
 							focusIn="rtfInput_focusInHandler(event)"
 							focusOut="rtfInput_focusOutHandler(event)"
 							keyDown="rtfInput_keyDownHandler(event)" type="input"/>
-		<mx:HRule includeIn="add" width="100%" strokeColor="#cccccc"/>
+		<mx:HRule width="100%" strokeColor="#cccccc"/>
 		<s:HGroup width="100%" height="45" gap="10" paddingLeft="10" paddingRight="10"
 				  verticalAlign="middle">
 			<s:Label left="20" width="100%" height="25" maxDisplayedLines="1"
@@ -485,9 +480,9 @@
 			<mx:Button id="btnClose" y="0" right="20" width="80" height="25"
 					   label="关　闭" click="close()" fontSize="12" fontWeight="normal" tabIndex="4"
 					   textAlign="center"/>
-			<mx:PopUpMenuButton id="btnSend" includeIn="add" y="-2" right="110" width="80"
-								height="25" label="发　送" click="btnSend_clickHandler(event)"
-								dataProvider="{sendMenu}" fontSize="12" fontWeight="normal"
+			<mx:PopUpMenuButton id="btnSend" y="-2" right="110" width="80" height="25" label="发　送"
+								click="btnSend_clickHandler(event)" dataProvider="{sendMenu}"
+								fontSize="12" fontWeight="normal"
 								itemClick="btnSend_itemClickHandler(event)" labelField="@label"
 								tabIndex="5"/>
 		</s:HGroup>

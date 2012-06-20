@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component1:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:component="com.fenxihui.library.component.*"
+				   xmlns:component1="com.fenxihui.library.component.*"
+				   minWidth="200" minHeight="496" creationComplete="initWindow();" frameRate="5"
+				   horizontalGap="5" layout="horizontal" paddingBottom="5" paddingLeft="5"
+				   paddingRight="5" paddingTop="5" title="分析师客户列表">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.Params;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			
+			import flash.events.Event;
+			
+			import mx.events.ListEvent;
+			
+			private static var _consultUserWindow:ConsultUserWindow;
+			public static function get consultUserWindow():ConsultUserWindow{
+				if(!_consultUserWindow){
+					_consultUserWindow=new ConsultUserWindow;
+				}
+				return _consultUserWindow;
+			}
+			
+			public static function remove():void{
+				if(!_consultUserWindow)
+					return;
+				_consultUserWindow.nativeWindow.close();
+				_consultUserWindow.removeAllChildren();
+				_consultUserWindow.removeAllElements();
+				_consultUserWindow=null;
+			}
+			
+			public var sendKey:String;
+			
+			public function initWindow():void{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					e.preventDefault();
+					remove();
+				});
+			}
+			
+			[Bindable]
+			public var userTree:XML;
+			
+			private static var userWindows:Array=[];
+			
+			protected function itemDoubleClickHandler(event:ListEvent):void
+			{
+				var xml:XML=(event.currentTarget as Tree).selectedItem as XML;
+				if(!xml || xml.name()=='group'){
+					return;
+				}
+				var cuid:uint=parseInt(xml.@cuid.toString());
+				if(!userWindows[cuid]){
+					userWindows[cuid]=new ConsultWindow;
+				}
+				with(userWindows[cuid]){
+					open(true);
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+					sendKey=this.sendKey;
+					userId=cuid;
+					nickname=xml.@nickname.toString();
+				}
+				xml.@unreads=0;
+				(userWindows[cuid] as ConsultWindow).addEventListener(Event.CLOSE,function(e:Event):void{
+					delete userWindows[cuid];
+				});
+			}
+			
+		]]>
+	</fx:Script>
+	<mx:Tree width="100%" height="100%" dataProvider="{userTree}" doubleClickEnabled="true"
+			 itemDoubleClick="itemDoubleClickHandler(event)"
+			 itemRenderer="com.fenxihui.desktop.view.item.ItemUser" showRoot="false"
+			 variableRowHeight="true"/>
+</component1:Window>

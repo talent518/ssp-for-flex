@@ -58,7 +58,7 @@
 				});
 				addEventListener(Event.CLOSING,function(e:Event):void{
 					e.preventDefault();
-					visible=false;
+					nativeWindow.visible=false;
 				});
 				
 				Main.setActiveAccount(Params.profile.nickname);
@@ -79,11 +79,14 @@
 				RemoteProxy.bind('Remind.Invest',function(request:XML):void{
 					setFlicker('invest',1);
 				});
+				RemoteProxy.bind('Remind.Consult',function(request:XML):void{
+					setFlicker('consult',1);
+				});
 				flickers={
 					os:{target:fbOS,icon:Icons.OS,title:'操作系统',number:0},
 					gold:{target:fbGold,icon:Icons.Gold,title:'优选金股',number:0},
-					invest:{target:fbInvest,icon:Icons.Invest,title:'投资组合',number:0}/*,
-					broadcast:{target:fbBroadcast,icon:Icons.Broadcast,title:'盘中直播',number:0}*/
+					invest:{target:fbInvest,icon:Icons.Invest,title:'投资组合',number:0},
+					consult:{target:fbConsult,icon:Icons.Consult,title:'个股会诊',number:0}
 				};
 				while(_flickers.length){
 					setFlicker.apply(null,_flickers.pop());
@@ -99,7 +102,11 @@
 				}
 				var f:Object=_mainWindow.flickers[type];
 				if(isJoin){
-					f.number+=number;
+					if(number<0 && f.number<Math.abs(number)){
+						f.number=0;
+					}else{
+						f.number+=number;
+					}
 				}else{
 					f.number=number;
 				}
@@ -220,6 +227,45 @@
 				RemoteProxy.send('Invest.State',{});
 			}
 			
+			protected function fbConsult_clickHandler(event:MouseEvent):void
+			{
+				Loading.show(fbConsult);
+				RemoteProxy.bind('Consult.State.Succeed',function(request:XML):void{
+					Loading.hide(fbConsult);
+					switch(request.@state.toString()){
+						case 'reply':
+							with(ConsultUserWindow.consultUserWindow){
+								open(true);
+								nativeWindow.activate();
+								nativeWindow.restore();
+								nativeWindow.orderToFront();
+								center();
+								sendKey=request.@sendKey.toString();
+								userTree=XML(request.userTree);
+							}
+							break;
+						case 'ask':
+							with(ConsultWindow.consultWindow){
+								open(true);
+								nativeWindow.activate();
+								nativeWindow.restore();
+								nativeWindow.orderToFront();
+								center();
+								sendKey=request.@sendKey.toString();
+								userId=parseInt(request.@uid.toString());
+								nickname=request.@nickname.toString();
+							}
+							break;
+					}
+				});
+				RemoteProxy.bind('Consult.State.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(fbConsult);
+					});
+				});
+				RemoteProxy.send('Consult.State',{});
+			}
+			
 		]]>
 	</fx:Script>
 	<s:Group id="windowMove" width="100%" height="40">
@@ -275,8 +321,8 @@
 										   click="fbBroadcast_clickHandler(event)"
 										   icon="{Icons.Broadcast}"
 										   toolTip="只有在您打开盘中直播窗口时，有新消息才能即时提醒到您"/>
-				<component4:FunctionButton id="fbConsult" width="100%" label="个股会诊" enabled="false"
-										   icon="{Icons.Consult}"/>
+				<component4:FunctionButton id="fbConsult" width="100%" label="个股会诊" enabled="true"
+										   icon="{Icons.Consult}" click="fbConsult_clickHandler(event)"/>
 				<component4:FunctionButton id="fbNews" width="100%" label="热点新闻" enabled="false"
 										   icon="{Icons.News}"/>
 			</s:HGroup>
