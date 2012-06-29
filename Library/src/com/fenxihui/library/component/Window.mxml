@@ -45,6 +45,7 @@
 	</fx:Style>
 	<fx:Script>
 		<![CDATA[
+			import mx.core.UIComponent;
 			import mx.core.windowClasses.TitleBar;
 			import mx.events.ResizeEvent;
 			
@@ -187,18 +188,29 @@
 				}
 			}
 			
-			public function set setMoveObject(e:DisplayObject):void{
-				e.addEventListener(MouseEvent.MOUSE_DOWN,startMove);
-				e.addEventListener(MouseEvent.MOUSE_OVER,endMove);
-				e.addEventListener(MouseEvent.MOUSE_UP,endMove);
+			private var _moveObject:UIComponent;
+			public function get moveObject():UIComponent{
+				return _moveObject;
+			}
+			public function set moveObject(e:UIComponent):void{
+				_moveObject=e;
+				_moveObject.addEventListener(MouseEvent.MOUSE_DOWN,startMove);
+				_moveObject.addEventListener(MouseEvent.MOUSE_OVER,endMove);
+				_moveObject.addEventListener(MouseEvent.MOUSE_UP,endMove);
 			}
 			
 			private var startPoint:Point;
 
 			public function startMove(e:MouseEvent):void{
+				if(e.target!=_moveObject){
+					return;
+				}
 				var rect:Rectangle=nativeWindow.bounds;
 				startPoint=new Point(e.stageX,e.stageY);;
 				addEventListener(MouseEvent.MOUSE_MOVE,moveHandler);
+				Mouse.hide();
+				Mouse.cursor=MouseCursor.HAND;
+				Mouse.show();
 			}
 
 			private function moveHandler(e:MouseEvent):void{
@@ -209,7 +221,13 @@
 			}
 
 			public function endMove(e:MouseEvent):void{
+				if(e.target!=_moveObject){
+					return;
+				}
 				removeEventListener(MouseEvent.MOUSE_MOVE,moveHandler);
+				Mouse.hide();
+				Mouse.cursor=MouseCursor.AUTO;
+				Mouse.show();
 			}
 		]]>
 	</fx:Script>

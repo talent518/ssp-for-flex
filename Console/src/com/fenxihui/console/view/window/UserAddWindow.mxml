@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component1:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:component="com.fenxihui.library.component.*"
+				   xmlns:component1="com.fenxihui.library.component.*"
+				   width="242" height="160" defaultButton="{btnAdd}" layout="vertical"
+				   maxButtonVisible="false" paddingBottom="10" paddingLeft="10" paddingRight="10"
+				   paddingTop="10" resizable="false" title="添加用户">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.model.User;
+			import com.fenxihui.console.utils.RemoteProxy;
+			private static var _userAddWindow:UserAddWindow;
+			public static function get userAddWindow():UserAddWindow{
+				if(!_userAddWindow){
+					_userAddWindow=new UserAddWindow;
+				}
+				return _userAddWindow;
+			}
+
+			public static function remove():void{
+				if(!_userAddWindow)
+					return;
+				_userAddWindow.nativeWindow.close();
+				_userAddWindow.removeAllChildren();
+				_userAddWindow.removeAllElements();
+				_userAddWindow=null;
+			}
+			
+			protected function btnAdd_clickHandler(event:MouseEvent):void
+			{
+				if(iptUsername.text==""){
+					ShowDialog("用户名不能为空！",false,function():void{
+						iptUsername.setFocus();
+					});
+					return;
+				}
+				if(iptPasswd.text==""){
+					ShowDialog("密码不能为空！",false,function():void{
+						iptPasswd.setFocus();
+					});
+					return;
+				}
+				if(iptEmail.text==""){
+					ShowDialog("电子邮件不能为空！",false,function():void{
+						iptEmail.setFocus();
+					});
+					return;
+				}
+				btnAdd.enabled=true;
+				RemoteProxy.bind('User.Register.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						remove();
+						UserWindow.userWindow.iptUserID.text=request.@uid.toString();
+						UserWindow.userWindow.iptUsername.text=request.@username.toString();
+						UserWindow.userWindow.iptEMail.text=request.@email.toString();
+						UserWindow.userWindow.cbbUserGroup.selectedItem=null;
+					});
+				});
+				RemoteProxy.bind('User.Register.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnAdd.enabled=true;
+					});
+				});
+				RemoteProxy.send('User.Register',{username:iptUsername.text,password:iptPasswd.text,email:iptEmail.text});
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="80" height="100%" fontSize="14" text="用户名：" textAlign="right"
+				 verticalAlign="middle"/>
+		<mx:TextInput id="iptUsername" width="100%" height="100%"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="80" height="100%" fontSize="14" text="密码：" textAlign="right"
+				 verticalAlign="middle"/>
+		<mx:TextInput id="iptPasswd" width="100%" height="100%"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="80" height="100%" fontSize="14" text="电子邮件：" textAlign="right"
+				 verticalAlign="middle"/>
+		<mx:TextInput id="iptEmail" width="100%" height="100%"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" horizontalAlign="center" textAlign="left">
+		<s:Button id="btnAdd" height="100%" label="添加用户" click="btnAdd_clickHandler(event)"
+				  fontSize="14" buttonMode="true" useHandCursor="true"/>
+	</s:HGroup>
+</component1:Window>

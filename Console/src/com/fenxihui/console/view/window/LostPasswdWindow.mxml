@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component1:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:component="com.fenxihui.library.component.*"
+				   xmlns:component1="com.fenxihui.library.component.*"
+				   width="300" height="145" creationComplete="initWindow()"
+				   defaultButton="{btnLostPasswd}" layout="vertical" maxButtonVisible="false"
+				   paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20"
+				   resizable="false" title="找回密码">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.model.User;
+			private static var _lostPasswdWindow:LostPasswdWindow;
+			public static function get lostPasswdWindow():LostPasswdWindow{
+				if(!_lostPasswdWindow){
+					_lostPasswdWindow=new LostPasswdWindow;
+				}
+				return _lostPasswdWindow;
+			}
+			
+			public static function remove():void{
+				if(!_lostPasswdWindow)
+					return;
+				_lostPasswdWindow.nativeWindow.close();
+				_lostPasswdWindow.removeAllChildren();
+				_lostPasswdWindow.removeAllElements();
+				_lostPasswdWindow=null;
+				//System.gc();
+			}
+			private function initWindow():void{
+				maxButtonVisible=false;
+			}
+			
+			protected function btnLostPasswd_clickHandler(event:MouseEvent):void
+			{
+				if(iptUsername.text==""){
+					ShowDialog("用户名不能为空！",false,function():void{
+						iptUsername.setFocus();
+					});
+					return;
+				}
+				if(iptEmail.text==""){
+					ShowDialog("电子邮件不能为空！",false,function():void{
+						iptEmail.setFocus();
+					});
+					return;
+				}
+				User.lostpasswd(iptUsername.text,iptEmail.text);
+			}
+			
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="60" height="100%" text="用户名：" textAlign="right" verticalAlign="middle"/>
+		<mx:TextInput id="iptUsername" width="100%" height="100%"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="60" height="100%" text="电子邮件：" textAlign="right" verticalAlign="middle"/>
+		<mx:TextInput id="iptEmail" width="100%" height="100%"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" horizontalAlign="center" textAlign="left">
+		<mx:Button id="btnLostPasswd" height="100%" label="找回密码"
+				   click="btnLostPasswd_clickHandler(event)"/>
+	</s:HGroup>
+</component1:Window>

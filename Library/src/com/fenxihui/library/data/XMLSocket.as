@@ -5,6 +5,7 @@ package com.fenxihui.library.data
 	import flash.net.Socket;
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
+	import flash.utils.setTimeout;
 	
 	import org.osmf.events.TimeEvent;
 
@@ -24,7 +25,9 @@ package com.fenxihui.library.data
 		private var connectTime:Number;
 		private var connectDelay:Number;
 		
-		private var timer:Timer;
+		private var delay:Number;
+		public var retrys:Number=0;
+		private var _retrys:Number=0;
 		
 		private var events:Array;
 		
@@ -51,33 +54,20 @@ package com.fenxihui.library.data
 
 			events=new Array();
 
-			timer=new Timer((delay>0?delay:1)*100);
-			timer.repeatCount=retryTimes;
-			timer.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
-				trace("Has retry "+retrys+" times");
-				timer.reset();
-				trigger(RETRY,[e]);
-			});
-			timer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
-				if(connected)
-					timer.reset();
-				else{
-					trace("Try:"+timer.currentCount+" time");
-					connect();
-				}
-			});
-		}
-
-		public function get retrys():uint{
-			return timer.repeatCount;
-		}
-		public function set retrys(times:uint):void{
-			timer.repeatCount=times;
+			this.delay=(delay>0?delay:1)*100;
+			retrys=retryTimes;
 		}
 		
 		public function connect():void{
+			if(connected){
+				return;
+			}
+			if(retrys>0 && _retrys==retrys){
+				trigger(RETRY,[{}]);
+			}
 			connectTime=new Date().time;
 			socket.connect(_host,_port);
+			_retrys++;
 		}
 		
 		public function close():void{
@@ -125,16 +115,17 @@ package com.fenxihui.library.data
 		
 		private function closeHandler(event:Event):void {
 			//trace("closeHandler: " + event);
-			if(!timer.running)
-				timer.start();
 			trigger(CLOSE,[event]);
+			setTimeout(function():void{
+				connect();
+			},0);
 		}
 		
 		private function connectHandler(event:Event):void {
 			//trace("connectHandler: " + event);
 			connectDelay=(new Date().time)-connectTime;
 			trace('Connect delay',connectDelay+'ms',(connectDelay/1000).toFixed(3)+'s');
-			timer.reset();
+			_retrys=0;
 			trigger(CONNECT,[event]);
 		}
 		
@@ -143,6 +134,9 @@ package com.fenxihui.library.data
 			while(socket.bytesAvailable)
 			{
 				if(recvedLength==0){
+					if(socket.bytesAvailable<4){
+						return;
+					}
 					recvLength=socket.readInt();
 					if(recvLength<=0){
 						return;
@@ -168,14 +162,18 @@ package com.fenxihui.library.data
 		
 		private function ioErrorHandler(event:IOErrorEvent):void {
 			//trace("ioErrorHandler: " + event);
-			if(!timer.running)
-				timer.start();
 			trigger(ERROR,[event]);
+			setTimeout(function():void{
+				connect();
+			},delay);
 		}
 		
 		private function securityErrorHandler(event:SecurityErrorEvent):void {
 			trace("securityErrorHandler: " + event);
 			trigger(ERROR,[event]);
+			setTimeout(function():void{
+				connect();
+			},delay);
 		}
 	}
 }

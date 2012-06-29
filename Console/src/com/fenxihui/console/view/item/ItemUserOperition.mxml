@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+						  xmlns:s="library://ns.adobe.com/flex/spark"
+						  xmlns:mx="library://ns.adobe.com/flex/mx"
+						  focusEnabled="true">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			import com.fenxihui.console.view.window.MainWindow;
+			import com.fenxihui.console.view.window.UserEditWindow;
+			import com.fenxihui.console.view.window.UserViewWindow;
+			
+			import mx.events.FlexEvent;
+			
+			protected function view(id:Number):void{
+				btnView.enabled=false;
+				RemoteProxy.bind('Console.User.View.Succeed',function(request:XML):void{
+					var viewWindow:UserViewWindow=new UserViewWindow;
+					with(viewWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						data=XML(request.user);
+					}
+					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						btnView.enabled=true;
+					});
+				});
+				RemoteProxy.bind('Console.User.View.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnView.enabled=true;
+					});
+				});
+				RemoteProxy.send('Console.User.View',{uid:id});
+			}
+			protected function edit(id:Number):void{
+				btnEdit.enabled=false;
+				RemoteProxy.bind('Console.User.Edit.Succeed',function(request:XML):void{
+					var editWindow:UserEditWindow=new UserEditWindow;
+					with(editWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						data=XML(request.user);
+					}
+					try{
+						editWindow.serv=XML(request.serv);
+					}catch(e:*){}
+					
+					editWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						btnEdit.enabled=true;
+					});
+				});
+				RemoteProxy.bind('Console.User.Edit.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnEdit.enabled=true;
+					});
+				});
+				RemoteProxy.send('Console.User.Edit',{uid:id});
+			}
+			protected function drop(id:Number):void{
+			}
+		]]>
+	</fx:Script>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button id="btnView" width="45" label="查看" buttonMode="true"
+				   click="view(parseInt(data.@uid.toString()))" useHandCursor="true"/>
+		<mx:Button id="btnEdit" width="45" label="编辑" buttonMode="true"
+				   click="edit(parseInt(data.@uid.toString()))" useHandCursor="true"/>
+		<mx:Button id="btnDrop" width="45" label="删除" buttonMode="true"
+				   click="drop(parseInt(data.@uid.toString()))" useHandCursor="true"/>
+	</mx:HBox>
+</s:MXDataGridItemRenderer>

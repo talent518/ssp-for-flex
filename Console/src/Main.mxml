@@ -12,22 +12,18 @@
 		global{
 			fontFamily:'宋体','Courier New';
 		}
+		.ToolTip{
+			fontSize:14px;
+		}
 	</mx:Style>
 	<mx:Script>
 		<![CDATA[
-			import air.update.ApplicationUpdaterUI;
-			import air.update.events.DownloadErrorEvent;
-			import air.update.events.StatusFileUpdateErrorEvent;
-			import air.update.events.StatusUpdateErrorEvent;
-			import air.update.events.StatusUpdateEvent;
-			import air.update.events.UpdateEvent;
-			
-			import com.fenxihui.desktop.model.User;
-			import com.fenxihui.desktop.utils.Params;
-			import com.fenxihui.desktop.utils.RemoteProxy;
-			import com.fenxihui.desktop.view.Loading;
-			import com.fenxihui.desktop.view.window.LoginWindow;
-			import com.fenxihui.desktop.view.window.MainWindow;
+			import com.fenxihui.console.model.User;
+			import com.fenxihui.console.utils.Params;
+			import com.fenxihui.console.utils.RemoteProxy;
+			import com.fenxihui.console.view.Loading;
+			import com.fenxihui.console.view.window.LoginWindow;
+			import com.fenxihui.console.view.window.MainWindow;
 			
 			import flash.desktop.DockIcon;
 			import flash.desktop.NativeApplication;
@@ -46,15 +42,15 @@
 			import mx.events.DragEvent;
 			import mx.events.EffectEvent;
 			import mx.events.FlexNativeMenuEvent;
+			import mx.managers.ToolTipManager;
 			import mx.utils.Base64Decoder;
 			import mx.utils.Base64Encoder;
 			import mx.utils.UIDUtil;
 			
-			private var appUpdater:ApplicationUpdaterUI=new ApplicationUpdaterUI();
-
-			
 			import org.gif.events.FrameEvent;
 			import org.gif.player.GIFPlayer;
+			
+			private static var _main:Main;
 			
 			[Embed(source="assets/app_16.png")]
 			[Bindable]
@@ -79,6 +75,7 @@
 			}
 			
 			private var flickerIcons:Array=new Array(),noneIcons:Array=new Array();
+			private var flickerQueues:Array=new Array(),flickerTimer:Timer=new Timer(3000,100);
 
 			private var timer:Timer=new Timer(360);
 			
@@ -89,17 +86,17 @@
 			private var sound:Sound=new soundClass() as Sound;
 			
 			private var _trayToolTip:String,_oldTrayToolTip:String;
-			
-			public function setFlickerIconFromBitmap(bitmap:Bitmap,toolTip:String):void{
+
+			public function getFlickerIconFromBitmap(bitmap:Bitmap):Array{
 				var _mask:Sprite=new Sprite;
 				_mask.graphics.clear();
 				_mask.graphics.beginFill(0x0);
 				_mask.graphics.drawRoundRect(0, 0,128,128,5, 5);
 				_mask.graphics.endFill();
 				bitmap.mask=_mask;
-
+				
 				var _flickerIcons:Array=[];
-
+				
 				var bitmapData:BitmapData;
 				for each(var i:int in [16,32,48,128]){
 					bitmapData=new BitmapData(i,i);
@@ -107,23 +104,47 @@
 					bitmapData.draw(bitmap,new Matrix(i/bitmap.width,0,0,i/bitmap.height));
 					_flickerIcons.push(bitmapData.clone());
 				}
-				startFlickerIcon(_flickerIcons,toolTip);
+				return _flickerIcons;
 			}
-
+			
 			public function startFlickerIcon(_flickerIcons:Array,toolTip:String):void{
 				_oldTrayToolTip=trayToolTip;
 				trayToolTip=toolTip;
 				flickerIcons=_flickerIcons;
 				timer.reset();
 				timer.start();
-				sound.play();
+				NativeApplication.nativeApplication.icon.bitmaps=_flickerIcons;
 			}
 			
 			public function stopFlickerIcon():void{
+				if(!_oldTrayToolTip)
+					return;
 				trayToolTip=_oldTrayToolTip;
 				this.flickerIcons=[];
 				timer.reset();
+				
 				NativeApplication.nativeApplication.icon.bitmaps=defIcons;
+			}
+			
+			public function addFlickerQueue(type:String,iconClass:Class,toolTip:String):void{
+				removeFlickerQueue(type);
+				flickerQueues.push({type:type,icons:getFlickerIconFromBitmap(new iconClass),toolTip:toolTip});
+				flickerTimer.start();
+				sound.play();
+				flickerTimer.dispatchEvent(new TimerEvent(TimerEvent.TIMER));
+			}
+			
+			public function removeFlickerQueue(type:String):void{
+				for(var i:* in flickerQueues){
+					if(flickerQueues[i].type==type){
+						flickerQueues.splice(i,1);
+						break;
+					}
+				}
+				if(flickerQueues.length==0){
+					flickerTimer.reset();
+					stopFlickerIcon();
+				}
 			}
 			
 			public function get trayToolTip():String{
@@ -152,19 +173,41 @@
 				timer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
 					NativeApplication.nativeApplication.icon.bitmaps=(timer.currentCount%2==0?flickerIcons:noneIcons);
 				});
+				flickerTimer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
+					stopFlickerIcon();
+					if(flickerQueues.length){
+						var flicker:Object=flickerQueues[flickerTimer.currentCount%flickerQueues.length];
+						startFlickerIcon(flicker.icons,flicker.toolTip);
+					}else{
+						flickerTimer.reset();
+					}
+				});
+				flickerTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
+					flickerTimer.reset();
+					if(flickerQueues.length){
+						flickerTimer.start();
+					}
+				});
 
 				if (NativeApplication.supportsSystemTrayIcon){
 					NativeApplication.nativeApplication.autoExit = false;
 					var tray:SystemTrayIcon = NativeApplication.nativeApplication.icon as SystemTrayIcon;
 					tray.menu = iconMenu.nativeMenu;
-					tray.addEventListener(ScreenMouseEvent.CLICK,OpenMainPanel);
+					tray.addEventListener(ScreenMouseEvent.CLICK,function(e:ScreenMouseEvent):void{
+						e.preventDefault();
+						OpenMainPanel();
+					});
 				}
 				if (NativeApplication.supportsDockIcon){
 					var dock:DockIcon = NativeApplication.nativeApplication.icon as DockIcon;
 					dock.menu = iconMenu.nativeMenu;
-					dock.addEventListener(Event.ACTIVATE,OpenMainPanel);
+					dock.addEventListener(Event.ACTIVATE,function(e:Event):void{
+						e.preventDefault();
+						OpenMainPanel();
+					});
 				}
-				trayToolTip="全能股市操盘系统";
+				trayToolTip="全能股市操盘系统控制台";
+				
 				_main=this;
 				RemoteProxy.bind('User.Login',function(request:XML):void{
 					MainWindow.remove();
@@ -185,9 +228,10 @@
 					OpenMainPanel();
 				}
 			}
-			private function OpenMainPanel(e:*=null):void{
+			private function OpenMainPanel():void{
+				trace('OpenMainPanel');
 				with(Params.isLogined?MainWindow.mainWindow:LoginWindow.loginWindow){
-					open(true); 
+					open(true);
 					nativeWindow.activate();
 					nativeWindow.restore();
 					nativeWindow.orderToFront();
@@ -210,10 +254,6 @@
 				}
 			}
 			
-			private static var _main:Main;
-			public static function get main():Main{
-				return _main;
-			}
 			public static function setIconMenu(isLoginAfter:Boolean):void{
 				_main.iconMenu.dataProvider=(isLoginAfter?_main.trayIconMenuForLoginAfter:_main.trayIconMenuForLoginBefore);
 			}
@@ -226,6 +266,25 @@
 			public static function exit():void{
 				NativeApplication.nativeApplication.icon.bitmaps = [];
 				NativeApplication.nativeApplication.exit();
+			}
+			
+			public static function getFlickerIconFromBitmap(bitmap:Bitmap):Array{
+				return _main.getFlickerIconFromBitmap(bitmap);
+			}
+			public static function startFlickerIcon(icons:Array,toolTip:String):void{
+				_main.startFlickerIcon(icons,toolTip);
+			}
+			public static function stopFlickerIcon():void{
+				_main.stopFlickerIcon();
+			}
+			public static function addFlickerQueue(type:String,iconClass:Class,toolTip:String):void{
+				_main.addFlickerQueue(type,iconClass,toolTip);
+			}
+			public static function removeFlickerQueue(type:String):void{
+				_main.removeFlickerQueue(type);
+			}
+			public static function clearFlickerQueue():void{
+				_main.flickerQueues=new Array();
 			}
 		]]>
 	</mx:Script>

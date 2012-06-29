@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXTreeItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+					  xmlns:s="library://ns.adobe.com/flex/spark"
+					  xmlns:mx="library://ns.adobe.com/flex/mx"
+					  xmlns:component="com.fenxihui.library.component.*"
+					  width="100%" dataChange="mxtreeitemrenderer1_dataChangeHandler(event)" xmlns:component1="com.fenxihui.library.component.*">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.*;
+			import mx.controls.treeClasses.*;
+			import mx.events.FlexEvent;
+			
+			protected function imgAvatar_clickHandler(event:MouseEvent):void
+			{
+				trace('Open user "'+data.@nickname+'" info window!');
+			}
+			
+			protected function mxtreeitemrenderer1_dataChangeHandler(event:FlexEvent):void
+			{
+				if(treeListData.hasChildren){
+					labelDisplay.text=data.@name;
+					labelDisplay.toolTip=data.@remark;
+				}else{
+					imgAvatar.source=data.@avatar.toString();
+					lblNickname.text=lblNickname.toolTip=data.@nickname;
+					lblUnread.text=lblUnread.toolTip=data.@unreads;
+					lblSignature.text=lblSignature.toolTip=data.@remark;
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup id="iconGroup" includeInLayout="{!treeListData.hasChildren}" x="0" y="0" width="100%" height="64" paddingBottom="8"
+			  paddingLeft="8" paddingRight="8" paddingTop="8" visible="{!treeListData.hasChildren}">
+		<component1:ImageBorder id="imgAvatar" width="48" height="48" cornerRadius="5" buttonMode="true" useHandCursor="true" click="imgAvatar_clickHandler(event)"/>
+		<s:VGroup width="100%" height="100%">
+			<s:HGroup width="100%" height="20">
+				<s:Label id="lblNickname" width="100%" height="100%" verticalAlign="middle"
+						 maxDisplayedLines="1" showTruncationTip="true"/>
+				<component:LabelBorder id="lblUnread" height="100%" backgroundAlpha="1.0"
+									   backgroundColor="#cccccc" borderVisible="false"
+									   color="#b60003" cornerRadius="5" fontFamily="Georgia"
+									   fontSize="14" fontWeight="bold" paddingLeft="5"
+									   paddingRight="5" textAlign="center" verticalAlign="middle"/>
+			</s:HGroup>
+			<s:Label id="lblSignature" width="100%" height="20" verticalAlign="middle"
+					 maxDisplayedLines="1" showTruncationTip="true"/>
+		</s:VGroup>
+	</s:HGroup>
+	<s:HGroup id="disclosureGroup" width="100%" height="20"
+			  includeInLayout="{treeListData.hasChildren}" verticalAlign="middle" visible="{treeListData.hasChildren}">
+		<s:BitmapImage source="{treeListData.icon}"/>
+		<s:Label id="labelDisplay" />
+	</s:HGroup>
+</s:MXTreeItemRenderer>

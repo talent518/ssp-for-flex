@@ -5,7 +5,7 @@
 				  xmlns:component="com.fenxihui.library.component.*"
 				  xmlns:component2="com.fenxihui.desktop.view.component.*"
 				  width="760" height="530" creationComplete="initWindow(event)" layout="vertical"
-				  setMoveObject="{windowMove}" showFlexChrome="false" verticalGap="0">
+				  moveObject="{windowMove}" showFlexChrome="false" verticalGap="0">
 	<fx:Script>
 		<![CDATA[
 			import com.fenxihui.desktop.utils.RemoteProxy;
@@ -275,9 +275,10 @@
 		<s:State name="eval"/>
 	</component:states>
 	<s:BorderContainer width="100%" height="40" backgroundColor="#c90101" borderVisible="false">
-		<s:BorderContainer id="windowMove" width="100%" height="100%"
+		<s:BorderContainer width="100%" height="100%"
 						   backgroundImage="@Embed(source='assets/bg_stock.png')"
 						   backgroundImageFillMode="clip" borderVisible="false">
+			<s:HGroup id="windowMove" width="100%" height="100%"/>
 			<s:Button y="10" right="30" buttonMode="true" click="minimize()"
 					  skinClass="skins.button.MinimizeButtonSkin" toolTip="最小化" useHandCursor="true"/>
 			<s:Button y="10" right="10" buttonMode="true" click="close()"
@@ -290,7 +291,7 @@
 		<mx:NumberFormatter id="percentFormatter" decimalSeparatorTo="." precision="1"
 							useNegativeSign="true" useThousandsSeparator="false"/>
 	</fx:Declarations>
-	<mx:HRule width="100%" height="1" chromeColor="#B60002"/>
+	<mx:HRule includeIn="eval,normal" width="100%" height="1" chromeColor="#B60002"/>
 	<s:HGroup width="100%" height="100%">
 		<s:Group width="136" height="100%">
 			<s:BorderContainer left="0" right="15" height="100%" backgroundColor="#C90001"

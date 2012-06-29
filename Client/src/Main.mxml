@@ -372,6 +372,9 @@
 			public static function removeFlickerQueue(type:String):void{
 				_main.removeFlickerQueue(type);
 			}
+			public static function clearFlickerQueue():void{
+				_main.flickerQueues=new Array();
+			}
 		]]>
 	</mx:Script>
 	<mx:XML id="trayIconMenuForLoginAfter" format="e4x">

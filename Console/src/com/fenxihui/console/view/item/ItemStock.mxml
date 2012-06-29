@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXTreeItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+					  xmlns:s="library://ns.adobe.com/flex/spark"
+					  xmlns:mx="library://ns.adobe.com/flex/mx"
+					  xmlns:component="com.fenxihui.library.component.*"
+					  width="100%" height="75" autoDrawBackground="true"
+					  dataChange="dataChangeHandler(event)">
+	<s:layout>
+		<s:VerticalLayout gap="0"/>
+	</s:layout>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.Params;
+			
+			import mx.events.FlexEvent;
+			
+			//			[Embed(source='assets/category.gif')]
+			//			[Bindable]
+			//			private var iconClass:Class;
+/*
+			public function setReaded(value:Boolean=true):void{
+				if(value){
+					if(data.@isread.toString()=="1"){
+						var date:Date=new Date;
+						var time:String=(date.month+1)+'-'+date.date+' '+date.hours+':'+date.minutes;
+						data.@readtime=time;
+						data.@isread=1;
+					}
+					lblTitle.setStyle('fontWeight','normal');
+					lblReadTime.text=data.@readtime;
+					lblReadTime.setStyle('fontWeight','normal');
+					lblReadTime.setStyle('backgroundColor',0xeeddcc);
+					lblOrderIndex.setStyle('color',0x666666);
+					lblOrderIndex.setStyle('backgroundColor',0xeeddcc);
+					lblOrderIndex.setStyle('color',0x666666);
+				}else{
+					lblTitle.setStyle('fontFamily','微软雅黑,黑体,宋体');
+					lblTitle.setStyle('fontWeight','bold');
+					lblReadTime.text='未读';
+					lblReadTime.setStyle('fontWeight','bold');
+					lblReadTime.setStyle('backgroundColor',0x336699);
+					lblOrderIndex.setStyle('color',0xFFFFFF);
+					lblOrderIndex.setStyle('backgroundColor',0x336699);
+					lblOrderIndex.setStyle('color',0xFFFFFF);
+				}
+			}*/
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(data){
+					/*switch(Params.infoType){
+						case 'news':
+							lblId.text=data.@aid;
+							break;
+						case 'thread':
+							lblId.text=data.@tid;
+							break;
+					}
+					lblTitle.text=data.@title;
+					//setReaded(data.@isread.toString()=="1");
+					
+					//icon.source=iconClass;
+					lblSummary.text=data.@summary;
+					lblDateline.text=data.@dateline;
+					lblAuthor.text=data.@author;
+					if(lblAuthor.text.length){
+						lblAuthor.includeInLayout=lblAuthor.visible=true;
+					}else{
+						lblAuthor.includeInLayout=lblAuthor.visible=false;
+					}*/
+				}
+			}
+		]]>
+	</fx:Script>
+</s:MXTreeItemRenderer>

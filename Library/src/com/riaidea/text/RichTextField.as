@@ -282,7 +282,7 @@ package com.riaidea.text
 			}catch(e:ReferenceError){
 				var sl:SWFLoader=new SWFLoader;
 				sl.addEventListener(Event.COMPLETE,function(e:Event):void{
-					var bitmap:ImageRenderer=new ImageRenderer((sl.content as Bitmap).bitmapData);
+					var bitmap:ImageRenderer=new ImageRenderer((sl.content as Bitmap).bitmapData.clone());
 					bitmap.source=newSprite;
 					bitmap.name=String(index);
 					bitmap.width=sl.content.width;

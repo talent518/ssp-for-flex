@@ -6,7 +6,7 @@
 				  xmlns:component4="com.fenxihui.desktop.view.component.*"
 				  width="650" height="500" backgroundImage="@Embed(source='assets/bg_main.png')"
 				  creationComplete="initWindow();" dropShadowVisible="true" fontSize="12"
-				  horizontalScrollPolicy="off" layout="vertical" setMoveObject="{windowMove}"
+				  horizontalScrollPolicy="off" layout="vertical" moveObject="{windowMove}"
 				  showFlexChrome="false" showStatusBar="false" showTitleBar="true"
 				  systemChrome="none" verticalGap="10" verticalScrollPolicy="off">
 	<fx:Script>

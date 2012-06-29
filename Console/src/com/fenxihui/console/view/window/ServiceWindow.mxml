@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="516" height="196" creationComplete="creationCompleteHandler(event)"
+				  layout="vertical" paddingBottom="10" paddingLeft="10" paddingRight="10" maxButtonVisible="false"
+				  paddingTop="10" title="服务信息">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			
+			import mx.events.FlexEvent;
+			private static var _serverWindow:ServiceWindow;
+			public static function get serverWindow():ServiceWindow{
+				if(!_serverWindow){
+					_serverWindow=new ServiceWindow;
+				}
+				return _serverWindow;
+			}
+			
+			public static function remove():void{
+				if(!_serverWindow)
+					return;
+				_serverWindow.nativeWindow.close();
+				_serverWindow.removeAllChildren();
+				_serverWindow.removeAllElements();
+				_serverWindow=null;
+			}
+			private var timer:Timer=new Timer(10000);
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					timer.reset();
+					remove();
+				});
+				RemoteProxy.bind('Console.Service.Info.Succeed',function(request:XML):void{
+					data=request;
+				});
+				RemoteProxy.bind('Console.Service.Info.Failed',function(request:XML):void{
+					remove();
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Console.Service.Info',{});
+				timer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
+					RemoteProxy.send('Console.Service.Info',{});
+				});
+				timer.start();
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="数据库版本：{data.runtime.@mysql}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="数据库大小：{data.runtime.@dbsize}" verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="服务版本：{data.@sspVersion}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="PHP版本：{data.@phpVersion}" verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="服务启动时间：{data.@sspTime}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="服务已运行时间：{data.@sspRunTimed}" verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="内存使用峰值：{data.@memoryPeakUsage}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="内存使用：{data.@memoryUsage}" verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="服务器时间：{data.@time}" verticalAlign="middle"/>
+	</s:HGroup>
+</component:Window>

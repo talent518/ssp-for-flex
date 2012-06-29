@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="500" height="402" layout="vertical" maxButtonVisible="false"
+				  paddingBottom="10" paddingTop="10" title="编辑用户组“{data.@title}”" dataChange="dataChangeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			
+			import mx.events.FlexEvent;
+			
+			private var dataKeys:Object;
+			
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(!data){
+					return;
+				}
+				dataKeys={
+					manage:cbManage,
+					manage_user:cbManageUser,
+					manage_user_group:cbManageUserGroup,
+					manage_serv_group:cbManageServGroup,
+					manage_service:cbManageService,
+					manage_count:cbManageCount,
+					use_expiry:cbUseExpiry,
+					consult_ask:cbConsultAsk,
+					consult_reply:cbConsultReply,
+					stock:cbStock,
+					stock_add:cbStockAdd,
+					stock_eval:cbStockEval,
+					broadcast:cbBroadcast,
+					broadcast_add:cbBroadcastAdd,
+					gold:cbGold,
+					gold_add:cbGoldAdd,
+					invest:cbInvest,
+					invest_add:cbInvestAdd
+				};
+				for(var key:String in dataKeys){
+					dataKeys[key].selected=parseInt(data['@'+key].toString())!=0;
+				}
+				cbManage_changeHandler(null);
+			}
+			
+			protected function cbManage_changeHandler(event:Event):void
+			{
+				for each(var obj:CheckBox in [cbManageUser,cbManageUserGroup,cbManageServGroup,cbManageService,cbManageCount]){
+					obj.enabled=!cbManage.selected;
+				}
+			}
+			
+			protected function save_clickHandler(event:MouseEvent):void
+			{
+				if(iptGname.text==""){
+					ShowDialog("用户组名不能为空！",false,function():void{
+						iptGname.setFocus();
+					});
+					return;
+				}
+				if(iptTitle.text==""){
+					ShowDialog("用户组标题不能为空！",false,function():void{
+						iptTitle.setFocus();
+					});
+					return;
+				}
+				btnSave.enabled=false;
+
+				var params:Object=new Object;
+				params.gid=parseInt(data.@gid.toString());
+				params.gname=iptGname.text;
+				params.title=iptTitle.text;
+				
+				for(var key:String in dataKeys){
+					params[key]=(dataKeys[key].selected?1:0);
+				}
+
+				RemoteProxy.bind('Console.UserGroup.EditSave.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						close();
+					});
+				});
+				RemoteProxy.bind('Console.UserGroup.EditSave.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnSave.enabled=true;
+					});
+				});
+				RemoteProxy.send('Console.UserGroup.EditSave',params);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:HGroup width="100%" height="30" paddingLeft="10" paddingRight="10">
+		<s:HGroup width="100%" height="100%">
+			<s:Label height="100%" fontSize="14" fontWeight="normal" text="用户组标题：" textAlign="right"
+					 verticalAlign="middle"/>
+			<s:TextInput id="iptTitle" width="100%" height="100%" text="{data.@title}"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label height="100%" fontSize="14" fontWeight="normal" text="用户组名：" textAlign="right"
+					 verticalAlign="middle"/>
+			<s:TextInput id="iptGname" width="100%" height="100%" text="{data.@gname}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
+			 paddingLeft="10" text="控制台功能权限" verticalAlign="middle"/>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbManage" width="100%" height="100%" label="超级管理" fontWeight="bold" change="cbManage_changeHandler(event)"/>
+		<s:CheckBox id="cbManageUser" width="100%" height="100%" label="用户管理"/>
+		<s:CheckBox id="cbManageUserGroup" width="100%" height="100%" label="用户组管理"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbManageServGroup" width="100%" height="100%" label="客户分组管理"/>
+		<s:CheckBox id="cbManageService" width="100%" height="100%" label="查看服务信息"/>
+		<s:CheckBox id="cbManageCount" width="100%" height="100%" label="查看统计信息"/>
+	</s:HGroup>
+	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
+			 paddingLeft="10" text="客户端功能权限" verticalAlign="middle"/>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbUseExpiry" width="100%" height="100%" label="使用过期" color="#960003"
+					fontStyle="normal" fontWeight="normal" textDecoration="none"/>
+		<s:CheckBox id="cbConsultAsk" width="100%" height="100%" label="个股会诊提问者"/>
+		<s:CheckBox id="cbConsultReply" width="100%" height="100%" label="个股会诊回复"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbStock" width="100%" height="100%" label="操作系统"/>
+		<s:CheckBox id="cbStockAdd" width="100%" height="100%" label="操作系统发布"/>
+		<s:CheckBox id="cbStockEval" width="100%" height="100%" label="操作系统评论"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbBroadcast" width="100%" height="100%" label="盘中直播"/>
+		<s:CheckBox id="cbGold" width="100%" height="100%" label="优先金股"/>
+		<s:CheckBox id="cbInvest" width="100%" height="100%" label="投资组合"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20">
+		<s:CheckBox id="cbBroadcastAdd" width="100%" height="100%" label="盘中直播发布"/>
+		<s:CheckBox id="cbGoldAdd" width="100%" height="100%" label="优先金股发布"/>
+		<s:CheckBox id="cbInvestAdd" width="100%" height="100%" label="投资组合发布"/>
+	</s:HGroup>
+	<s:VGroup width="100%" height="30" horizontalAlign="center" paddingLeft="20" paddingRight="20">
+		<component:LabelBorder id="btnSave" height="100%" backgroundAlpha="1.0"
+							   backgroundColor="#B60003" borderColor="#960003"
+							   borderVisible="true" borderWeight="1" buttonMode="true"
+							   click="save_clickHandler(event)" color="#FFFFFF" cornerRadius="5"
+							   fontWeight="bold" paddingLeft="10" paddingRight="10" text="保存用户组"
+							   textAlign="center" useHandCursor="true" verticalAlign="middle"/>
+	</s:VGroup>
+</component:Window>

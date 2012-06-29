@@ -7,16 +7,13 @@ package com.fenxihui.desktop.utils
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
 	
+	import mx.formatters.DateFormatter;
+	
 	public class RemoteProxy
 	{
-		public static const LOGIN:String='login';
-		public static const INIT:String='init';
-		public static const SETTING:String='setting';
-		public static const REMIND:String='remind';
-		public static const CHAT:String='chat';
-		
 		private static var _instance:RemoteProxy=new RemoteProxy;
 		
+		private var timerPing:Timer;
 		private var timers:Array;
 		private var sendQueues:Array;
 		private var events:Array;
@@ -30,6 +27,11 @@ package com.fenxihui.desktop.utils
 				throw new Error("RemoteProxy can only be accessed through RemoteProxy.getInstance()");
 				return;
 			}
+			
+			timerPing=new Timer(30000);
+			timerPing.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
+				socket.send(<request type="Connect.Ping"/>);
+			});
 			timers=new Array();
 			sendQueues=new Array();
 			events=new Array();
@@ -38,6 +40,8 @@ package com.fenxihui.desktop.utils
 			socket.bind(XMLSocket.DATA,Receive);
 			socket.bind(XMLSocket.CONNECT,function(e:Object):void{
 				trace('Connected',sendQueues.length);
+				timerPing.reset();
+				timerPing.start();
 
 				var chars:String='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',i:uint;
 				for(i=0;i<128;i++)
@@ -51,18 +55,17 @@ package com.fenxihui.desktop.utils
 			});
 			socket.bind(XMLSocket.CLOSE,function(e:Object):void{
 				receiveKey=sendKey='';
-				trace('Closed');
 				Params.statusChangeEvent(0);
+				timerPing.reset();
 			});
 			socket.bind(XMLSocket.ERROR,function(e:Object):void{
-				trace('Errored');
 				Params.statusChangeEvent(0);
+				timerPing.reset();
 			});
 			socket.bind(XMLSocket.PROGRESS,function(e:Object):void{
 				trace('Progressing');
 			});
 			socket.bind(XMLSocket.RETRY,function(e:Object):void{
-				trace('Retried');
 				sendQueues=new Array();
 				Params.statusChangeEvent(-1);
 			});
@@ -86,6 +89,11 @@ package com.fenxihui.desktop.utils
 							trace('Connect Key is empty.');
 						}
 						break;
+					case 'Connect.Ping':
+						var df:DateFormatter=new DateFormatter;
+						df.formatString='HH:NN:SS';
+						trace('Ping Time',df.format(new Date()));
+						break;
 					default:
 						trace('Received:',xml.toXMLString());
 				}
@@ -107,7 +115,7 @@ package com.fenxihui.desktop.utils
 					delete _instance.timers[_type];
 				}
 			}else
-				trace(type,xml);
+				trace(type,xml.toXMLString());
 		}
 		public static function send(type:String,params:Object,moreArg:Object=null):void{
 			var data:Object={"@type":type,"params":params};
@@ -118,17 +126,19 @@ package com.fenxihui.desktop.utils
 				_instance.socket.connect();
 			}
 			if(_instance.socket.connected){
+				_instance.timerPing.reset();
+				_instance.timerPing.start();
 				_instance.socket.send(XML('<request type="Connect.Data">'+Crypter.encode(xml.toXMLString(),_instance.sendKey)+'</request>'));
 				if(!_instance.timers[type] && _instance.events[type+'.Failed']){
-					var timer:Timer=new Timer(1000,10);
-					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
+					var timerTimeOut:Timer=new Timer(1000,10);
+					timerTimeOut.addEventListener(TimerEvent.TIMER_COMPLETE,function(e:TimerEvent):void{
 						_instance.socket.clearBuffer();
 						var xml:XML=<response>服务器没有响应！请稍后重试！</response>;
 						xml.@type=type+'.Failed';
 						trigger(type+'.Failed',xml);
 					});
-					timer.start();
-					_instance.timers[type]=timer;
+					timerTimeOut.start();
+					_instance.timers[type]=timerTimeOut;
 				}
 			}else{
 				_instance.sendQueues.push(xml);

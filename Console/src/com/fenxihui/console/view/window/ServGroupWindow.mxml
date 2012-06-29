@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="580" height="480" minWidth="580" layout="vertical" paddingBottom="10"
+				  paddingLeft="10" paddingRight="10" paddingTop="10" resizable="true" title="客户分组管理" creationComplete="init(event)">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:HGroup width="100%" height="30">
+		<component:LabelBorder id="refreshGold" height="100%" backgroundAlpha="1.0"
+							   backgroundColor="#b60002" borderColor="#960003"
+							   borderVisible="true" borderWeight="1" buttonMode="true"
+							   click="refresh_list()" color="#ffffff" cornerRadius="5"
+							   focusEnabled="true" fontWeight="bold" paddingLeft="5"
+							   paddingRight="5" text="刷新列表" textAlign="center"
+							   useHandCursor="true" verticalAlign="middle"/>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="70" height="100%" text="分组名称：" textAlign="right" verticalAlign="middle"/>
+			<mx:TextInput id="iptName" width="100%" height="100%"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="90" height="100%" text="分组备注：" textAlign="right" verticalAlign="middle"/>
+			<mx:TextInput id="iptRemark" width="100%" height="100%"/>
+		</s:HGroup>
+		<component:LabelBorder id="btnSave" height="100%" backgroundAlpha="1.0"
+							   backgroundColor="#B60003" borderColor="#960003"
+							   borderVisible="true" borderWeight="1" buttonMode="true"
+							   click="add_clickHandler(event)" color="#FFFFFF" cornerRadius="5"
+							   fontWeight="bold" paddingLeft="10" paddingRight="10" text="添加分组"
+							   textAlign="center" useHandCursor="true" verticalAlign="middle"/>
+	</s:HGroup>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			import com.fenxihui.console.view.Loading;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.XMLListCollection;
+			import mx.events.FlexEvent;
+			private static var _servGroupWindow:ServGroupWindow;
+			public static function get servGroupWindow():ServGroupWindow{
+				if(!_servGroupWindow){
+					_servGroupWindow=new ServGroupWindow;
+				}
+				return _servGroupWindow;
+			}
+			
+			public static function remove():void{
+				if(!_servGroupWindow)
+					return;
+				_servGroupWindow.nativeWindow.close();
+				_servGroupWindow.removeAllChildren();
+				_servGroupWindow.removeAllElements();
+				_servGroupWindow=null;
+			}
+			
+			[Bindable]
+			protected var _dataServGroupList:XMLList=null;
+			
+			public static function get dataServGroupList():XMLList{
+				return _servGroupWindow._dataServGroupList;
+			}
+			public static function set dataServGroupList(value:XMLList):void{
+				with(_servGroupWindow){
+					delete _dataServGroupList;
+					_dataServGroupList=value as XMLList;
+				}
+			}
+			
+			private var params:Object=new Object;
+
+			public function refresh_list():void
+			{
+				Loading.show(userList,0x0,0.5);
+				RemoteProxy.bind('Console.ServGroup.List.Succeed',function(request:XML):void{
+					Loading.hide(userList);
+					dataServGroupList=XMLList(request.group);
+				});
+				RemoteProxy.bind('Console.ServGroup.List.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(userList);
+					});
+				});
+				RemoteProxy.send('Console.ServGroup.List',params);
+			}
+			
+			protected function add_clickHandler(event:MouseEvent):void
+			{
+				if(iptName.text==""){
+					ShowDialog("分组名称不能为空！",false,function():void{
+						iptName.setFocus();
+					});
+					return;
+				}
+				if(iptRemark.text==""){
+					ShowDialog("分组备注不能为空！",false,function():void{
+						iptRemark.setFocus();
+					});
+					return;
+				}
+				btnSave.enabled=false;
+				RemoteProxy.bind('Console.ServGroup.Add.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						btnSave.enabled=true;
+						iptName.text=iptRemark.text="";
+						refresh_list();
+					});
+				});
+				RemoteProxy.bind('Console.ServGroup.Add.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnSave.enabled=true;
+					});
+				});
+				RemoteProxy.send('Console.ServGroup.Add',{name:iptName.text,remark:iptRemark.text});
+			}
+
+			protected function init(event:FlexEvent):void
+			{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					remove();
+				});
+				refresh_list();
+			}
+			
+		]]>
+	</fx:Script>
+	<mx:DataGrid id="userList" width="100%" height="100%" dataProvider="{_dataServGroupList}"
+				 editable="false" fontSize="12" resizableColumns="true">
+		<mx:columns>
+			<mx:DataGridColumn width="60" dataField="@gid" headerText="分组ID" sortable="false"
+							   textAlign="right"/>
+			<mx:DataGridColumn dataField="@name" headerText="分组名称" sortable="false"
+							   textAlign="left"/>
+			<mx:DataGridColumn dataField="@remark" headerText="分组备注" sortable="false"
+							   textAlign="left"/>
+			<mx:DataGridColumn width="110" headerText="操作"
+							   itemRenderer="com.fenxihui.console.view.item.ItemServGroupOperition"
+							   sortable="false" textAlign="center"/>
+		</mx:columns>
+	</mx:DataGrid>
+</component:Window>

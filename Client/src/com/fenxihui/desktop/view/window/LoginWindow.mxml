@@ -6,7 +6,7 @@
 				  width="650" height="500" backgroundImage="@Embed(source='assets/bg_login.png')"
 				  cornerRadius="10" creationComplete="initWindow(event)" defaultButton="{btnLogin}"
 				  dropShadowVisible="true" horizontalScrollPolicy="off" maxButtonVisible="false"
-				  resizable="false" setMoveObject="{windowMove}" showFlexChrome="false"
+				  resizable="false" moveObject="{windowMove}" showFlexChrome="false"
 				  verticalScrollPolicy="off">
 	<fx:Script>
 		<![CDATA[
@@ -74,6 +74,7 @@
 					chkAutoLogin.selected=true;
 					chkRemember.selected=true;
 				}
+				Main.clearFlickerQueue();
 			}
 			
 			protected function btnLogin_clickHandler(event:MouseEvent):void

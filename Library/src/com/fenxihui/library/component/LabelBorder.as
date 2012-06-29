@@ -29,6 +29,14 @@ package com.fenxihui.library.component
 			_mask=new Sprite;
 			addChild(_mask);
 		}
+		
+		override public function set enabled(value:Boolean):void{
+			super.enabled=value;
+			mouseEnabled=value;
+			mouseFocusEnabled=value;
+			mouseChildren=value;
+		}
+		
 		override protected function updateDisplayList(w:Number, h:Number):void{
 			_backgroundAlpha=getStyle('backgroundAlpha');
 			setStyle('backgroundAlpha',0);

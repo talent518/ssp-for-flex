@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  minWidth="680" height="480" layout="vertical" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" title="用户管理" resizable="true">
+	<s:BorderContainer width="100%" backgroundColor="#CCCCCC" borderColor="#AAAAAA" creationComplete="init(event)">
+		<s:layout>
+			<s:VerticalLayout paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10"/>
+		</s:layout>
+		<s:HGroup width="100%" height="30">
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="用户ID："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:TextInput id="iptUserID" width="100%" height="100%"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="用户名："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:TextInput id="iptUsername" width="100%" height="100%"/>
+			</s:HGroup>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30">
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="E-Mail："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:TextInput id="iptEMail" width="100%" height="100%"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="用户组："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:ComboBox id="cbbUserGroup" width="100%" height="100%" dataProvider="{userGroups}" labelField="@title"/>
+			</s:HGroup>
+		</s:HGroup>
+		<mx:HRule width="100%" height="2" chromeColor="#999999"/>
+		<s:HGroup width="100%" height="30" horizontalAlign="center">
+			<component:LabelBorder id="btnReset" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#b60002" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="btnReset_clickHandler(event)" color="#ffffff" cornerRadius="5"
+								   focusEnabled="true" fontWeight="bold" paddingLeft="5"
+								   paddingRight="5" text="复　位" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<component:LabelBorder id="btnSearch" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#b60002" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="btnSearch_clickHandler(event)" color="#ffffff" cornerRadius="5"
+								   focusEnabled="true" fontWeight="bold" paddingLeft="5"
+								   paddingRight="5" text="搜　索" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+		</s:HGroup>
+	</s:BorderContainer>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			import com.fenxihui.console.view.Loading;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.XMLListCollection;
+			import mx.events.FlexEvent;
+			private static var _userWindow:UserWindow;
+			public static function get userWindow():UserWindow{
+				if(!_userWindow){
+					_userWindow=new UserWindow;
+				}
+				return _userWindow;
+			}
+			
+			public static function remove():void{
+				if(!_userWindow)
+					return;
+				_userWindow.nativeWindow.close();
+				_userWindow.removeAllChildren();
+				_userWindow.removeAllElements();
+				_userWindow=null;
+			}
+			
+			[Bindable]
+			private var countRow:uint=1;
+			
+			[Bindable]
+			private var curPage:uint=1;
+			[Bindable]
+			private var countPage:uint=1;
+			[Bindable]
+			private var sizePage:uint=10;
+			
+			protected function calcPage():void{
+				sizePage=Math.max(10,sizePage);
+				if(countRow){
+					countPage=Math.ceil(countRow/sizePage);
+					curPage=Math.max(1,Math.min(curPage,countPage));
+				}else{
+					countPage=0;
+					curPage=0;
+				}
+				
+				firstPage.enabled=(curPage>1 && countPage>1);
+				prevPage.enabled=(curPage>1 && countPage>1);
+				nextPage.enabled=(curPage<countPage && countPage>1);
+				lastPage.enabled=(curPage<countPage && countPage>1);
+				
+				var lbl:LabelBorder;
+				for each(lbl in [firstPage,prevPage,nextPage,lastPage]){
+					if(lbl.enabled){
+						lbl.setStyle('color',0xFFFFFF);
+						lbl.setStyle('borderColor',0x960003);
+						lbl.setStyle('backgroundColor',0xb60003);
+					}else{
+						lbl.setStyle('color',0x333333);
+						lbl.setStyle('borderColor',0x666666);
+						lbl.setStyle('backgroundColor',0x999999);
+					}
+				}
+			}
+			
+			[Bindable]
+			protected var _dataUserList:XMLList=null;
+			
+			public static function get dataUserList():XMLList{
+				return _userWindow._dataUserList;
+			}
+			public static function set dataUserList(value:XMLList):void{
+				with(_userWindow){
+					delete _dataUserList;
+					_dataUserList=value as XMLList;
+					calcPage();
+				}
+			}
+			
+			private var params:Object=new Object;
+
+			public function refresh_list():void
+			{
+				Loading.show(userList,0x0,0.5);
+				RemoteProxy.bind('Console.User.List.Succeed',function(request:XML):void{
+					Loading.hide(userList);
+					dataUserList=XMLList(request.user);
+					var _countRow:uint=uint(request.@counts.toString());
+					countRow=_countRow;
+					calcPage();
+				});
+				RemoteProxy.bind('Console.User.List.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						Loading.hide(userList);
+					});
+				});
+				params.page=curPage;
+				params.size=sizePage;
+				RemoteProxy.send('Console.User.List',params);
+			}
+			
+			protected function iptPage_enterHandler():void
+			{
+				var _curPage:uint=curPage;
+				curPage=uint(iptPage.text);
+				stage.focus=userList;
+				calcPage();
+				if(_curPage!=curPage)
+					refresh_list();
+			}
+			
+			protected function iptPage_focusInHandler(event:FocusEvent):void
+			{
+				iptPage.text=String(curPage);
+				iptPage.selectRange(iptPage.text.length,iptPage.text.length);
+			}
+			
+			protected function iptPage_focusOutHandler(event:FocusEvent):void
+			{
+				iptPage.text="";
+			}
+			
+			protected function iptSize_enterHandler():void
+			{
+				var _sizePage:uint=sizePage;
+				sizePage=uint(iptSize.text);
+				stage.focus=userList;
+				calcPage();
+				if(_sizePage!=sizePage)
+					refresh_list();
+			}
+			
+			protected function iptSize_focusInHandler(event:FocusEvent):void
+			{
+				iptSize.text=String(sizePage);
+				iptSize.selectRange(iptSize.text.length,iptSize.text.length);
+			}
+			
+			protected function iptSize_focusOutHandler(event:FocusEvent):void
+			{
+				iptSize.text="";
+			}
+			
+			protected function firstPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=1;
+				refresh_list();
+			}
+			
+			protected function prevPage_clickHandler(event:MouseEvent):void
+			{
+				curPage--;
+				refresh_list();
+			}
+			
+			protected function nextPage_clickHandler(event:MouseEvent):void
+			{
+				curPage++;
+				refresh_list();
+			}
+			
+			protected function lastPage_clickHandler(event:MouseEvent):void
+			{
+				curPage=countPage;
+				refresh_list();
+			}
+			
+			protected function add_clickHandler(event:MouseEvent):void
+			{
+				with(UserAddWindow.userAddWindow){
+					open(true);
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+			
+			protected function btnSearch_clickHandler(event:MouseEvent):void
+			{
+				params=new Object;
+				if(iptUserID.text){
+					params.uid=iptUserID.text;
+				}
+				
+				if(iptUsername.text){
+					params.username=iptUsername.text;
+				}
+				
+				if(iptEMail.text){
+					params.email=iptEMail.text;
+				}
+				
+				if(cbbUserGroup.selectedItem){
+					params.gid=parseInt(cbbUserGroup.selectedItem.@gid.toString());
+				}
+				curPage=1;
+				refresh_list();
+			}
+			
+			protected function btnReset_clickHandler(event:MouseEvent):void
+			{
+				params=new Object;
+				iptUserID.text=iptUsername.text=iptEMail.text="";
+				cbbUserGroup.selectedIndex=-1;
+				curPage=1;
+				refresh_list();
+			}
+			
+			[Bindable]
+			public static var userGroups:XMLListCollection;
+			
+			protected function init(event:FlexEvent):void
+			{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					remove();
+				});
+				
+				if(!userGroups){
+					RemoteProxy.bind('Console.User.Group',function(request:XML):void{
+						userGroups=new XMLListCollection(request.group);
+					});
+					RemoteProxy.send('Console.User.Group',{});
+				}
+
+				refresh_list();
+			}
+			
+			protected function add_creationCompleteHandler(event:FlexEvent):void
+			{
+				with(UserAddWindow.userAddWindow){
+					open(true);
+					nativeWindow.activate();
+					nativeWindow.restore();
+					nativeWindow.orderToFront();
+					center();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<s:VGroup width="100%" height="100%" gap="10">
+		<mx:HBox width="100%" height="30" borderVisible="true" horizontalGap="10">
+			<component:LabelBorder height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="add_clickHandler(event)" color="#FFFFFF" cornerRadius="5"
+								   fontWeight="bold" paddingLeft="10" paddingRight="10" text="添加用户"
+								   textAlign="center" useHandCursor="true" verticalAlign="middle" creationComplete="init(event)"/>
+			<mx:HBox width="100%" height="100%" horizontalAlign="center" horizontalGap="0">
+				<s:Label height="100%" color="#666666" paddingRight="20" text="记录数：{countRow}"
+						 textAlign="center" verticalAlign="middle"/>
+				
+				<s:Label height="100%" paddingLeft="5" paddingRight="5" text="转到"
+						 verticalAlign="middle"/>
+				<s:TextInput id="iptPage" width="32" height="100%" enter="iptPage_enterHandler()"
+							 focusEnabled="true" focusIn="iptPage_focusInHandler(event)"
+							 focusOut="iptPage_focusOutHandler(event)" maxChars="5"
+							 prompt="{curPage}" restrict="0123456789" softKeyboardType="number"/>
+				<s:Label height="100%" paddingLeft="5" paddingRight="15" text="页"
+						 verticalAlign="middle"/>
+				<s:TextInput id="iptSize" width="32" height="100%" enter="iptSize_enterHandler()"
+							 focusEnabled="true" focusIn="iptSize_focusInHandler(event)"
+							 focusOut="iptSize_focusOutHandler(event)" maxChars="3"
+							 prompt="{sizePage}" restrict="0123456789"/>
+				<s:Label height="100%" paddingLeft="5" paddingRight="5" text="行数/页"
+						 verticalAlign="middle"/>
+			</mx:HBox>
+			<component:LabelBorder id="refreshGold" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#b60002" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="refresh_list()" color="#ffffff" cornerRadius="5"
+								   focusEnabled="true" fontWeight="bold" paddingLeft="5"
+								   paddingRight="5" text="刷新列表" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+		</mx:HBox>
+		<mx:DataGrid id="userList" width="100%" height="100%" dataProvider="{_dataUserList}"
+					 editable="false" fontSize="12" resizableColumns="true">
+			<mx:columns>
+				<mx:DataGridColumn width="60" dataField="@uid" headerText="用户ID" sortable="false"
+								   textAlign="right"/>
+				<mx:DataGridColumn dataField="@username" headerText="用户名" sortable="false"
+								   textAlign="left"/>
+				<mx:DataGridColumn dataField="@email" headerText="E-Mail" sortable="false"
+								   textAlign="left"/>
+				<mx:DataGridColumn width="80" dataField="@regtime" headerText="注册时间"
+								   sortable="false" textAlign="left"/>
+				<mx:DataGridColumn width="100" dataField="@regip" headerText="注册IP"
+								   sortable="false" textAlign="left"/>
+				<mx:DataGridColumn width="165" headerText="操作"
+								   itemRenderer="com.fenxihui.console.view.item.ItemUserOperition"
+								   sortable="false" textAlign="center"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:HBox width="100%" height="25" horizontalAlign="center">
+			<component:LabelBorder id="firstPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="firstPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="首页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<component:LabelBorder id="prevPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="prevPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="上一页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<s:Label height="100%" color="#666666" paddingLeft="5" paddingRight="5"
+					 text="当前页：{curPage}/总页数{countPage}" textAlign="center" verticalAlign="middle"/>
+			<component:LabelBorder id="nextPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="nextPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="下一页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+			<component:LabelBorder id="lastPage" height="100%" backgroundAlpha="1.0"
+								   backgroundColor="#B60003" borderColor="#960003"
+								   borderVisible="true" borderWeight="1" buttonMode="true"
+								   click="lastPage_clickHandler(event)" color="#ffffff"
+								   cornerRadius="5" focusEnabled="true" paddingLeft="5"
+								   paddingRight="5" text="尾页" textAlign="center"
+								   useHandCursor="true" verticalAlign="middle"/>
+		</mx:HBox>
+	</s:VGroup>
+</component:Window>

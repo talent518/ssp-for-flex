@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  minWidth="556" minHeight="422" creationComplete="creationCompleteHandler(event)"
+				  layout="vertical" maxButtonVisible="false" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" title="编辑用户“{data.@username}”">
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="YYYY-MM-DD"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			
+			import mx.collections.XMLListCollection;
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			import mx.utils.ObjectUtil;
+			
+			import spark.events.IndexChangeEvent;
+			
+			[Bindable]
+			public var serv:XML;
+			
+			[Bindable]
+			public static var userServs:XMLListCollection;
+			
+			[Bindable]
+			public static var userServGroups:XMLListCollection;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				var xmlList:XMLList=UserWindow.userGroups.source.(@gid==data.@gid.toString());
+				if(xmlList.length()){
+					cbbUserGroup.selectedItem=xmlList[0];
+					cbbUserGroup_changeHandler(null);
+				}
+				if(!userServs){
+					RemoteProxy.bind('Console.User.Serv',function(request:XML):void{
+						userServs=new XMLListCollection(request.serv);
+						initUserServ();
+					});
+					RemoteProxy.send('Console.User.Serv',{});
+				}else{
+					initUserServ();
+				}
+				if(!userServGroups){
+					RemoteProxy.bind('Console.User.ServGroup',function(request:XML):void{
+						userServGroups=new XMLListCollection(request.group);
+						initUserServGroup();
+					});
+					RemoteProxy.send('Console.User.ServGroup',{});
+				}else{
+					initUserServGroup();
+				}
+			}
+			private function initUserServ():void{
+				if(!serv){
+					return;
+				}
+				var xmlList:XMLList=userServs.source.(@uid==serv.@uid.toString());
+				if(xmlList.length()){
+					cbbServ.selectedItem=xmlList[0];
+				}
+			}
+			private function initUserServGroup():void{
+				if(!serv){
+					return;
+				}
+				var xmlList:XMLList=userServGroups.source.(@gid==serv.@gid.toString());
+				if(xmlList.length()){
+					cbbServGroup.selectedItem=xmlList[0];
+				}
+			}
+
+			protected function labelFunctionDate(item:Date):String{
+				return dateFormatter.format(item);
+			}
+
+			protected function save_clickHandler(event:MouseEvent):void
+			{
+				var params:Object=new Object;
+				params.uid=parseInt(data.@uid.toString());
+				
+				if(data.@email.toString()!=iptEmail.text){
+					params.email=iptEmail.text;
+				}
+				if(iptPassword.text!=''){
+					params.password=iptPassword.text;
+				}
+				var gid:String=cbbUserGroup.selectedItem.@gid.toString();
+				if(cbbUserGroup.selectedItem && data.@gid.toString()!=gid){
+					params.gid=parseInt(gid);
+				}
+				if(useExpiry){
+					if(cbbServ.selectedItem){
+						var suid:String=cbbServ.selectedItem.@uid.toString();
+						if(!serv || serv.@uid.toString()!=suid){
+							params.suid=parseInt(suid);
+						}
+					}else{
+						ShowDialog('请选择所属客服',false);
+						return;
+					}
+					if(cbbServGroup.selectedItem){
+						var sgid:String=cbbServGroup.selectedItem.@gid.toString();
+						if(!serv || serv.@gid.toString()!=sgid){
+							params.sgid=parseInt(sgid);
+						}
+					}else{
+						ShowDialog('请选择所属客服',false);
+						return;
+					}
+					if(data.@expiry.toString()!=iptExpiry.text){
+						params.expiry=iptExpiry.text;
+					}
+					if(!serv || serv.@nickname.toString()!=iptNickname.text){
+						params.nickname=iptNickname.text;
+					}
+					if(!serv || serv.@phone.toString()!=iptPhone.text){
+						params.phone=iptPhone.text;
+					}
+					if(!serv || serv.@email.toString()!=iptEmailServ.text){
+						params.emailserv=iptEmailServ.text;
+					}
+					if(!serv || serv.@qq.toString()!=iptQQ.text){
+						params.qq=iptQQ.text;
+					}
+					if(!serv || serv.@funds.toString()!=iptFunds.text){
+						params.funds=iptFunds.text;
+					}
+					if(!serv || serv.@address.toString()!=iptAddress.text){
+						params.address=iptAddress.text;
+					}
+					if(!serv || serv.@remark.toString()!=iptRemark.text){
+						params.remark=iptRemark.text;
+					}
+				}
+				var i:int=0;
+				for(var k:* in params){
+					i++;
+				}
+				if(i<=1){
+					ShowDialog('您没有修改任何值，不需要保存！',false);
+					return;
+				}
+				btnSave.enabled=false;
+				RemoteProxy.bind('Console.User.EditSave.Succeed',function(request:XML):void{
+					btnSave.enabled=true;
+					ShowDialog(request.text(),true,function():void{
+						close();
+					});
+				});
+				RemoteProxy.bind('Console.User.EditSave.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnSave.enabled=true;
+					});
+				});
+				RemoteProxy.send('Console.User.EditSave',params);
+			}
+			
+			private var useExpiry:Boolean=false;
+			protected function cbbUserGroup_changeHandler(event:IndexChangeEvent):void
+			{
+				if(!cbbUserGroup.selectedItem)
+					return;
+				
+				trace('cbbUserGroup.selectedItem',cbbUserGroup.selectedItem.toXMLString());
+				
+				useExpiry=parseInt(cbbUserGroup.selectedItem.@useExpiry.toString())!=0;
+				for each(var obj:UIComponent in [iptExpiry,cbbServ,cbbServGroup,iptNickname,iptPhone,iptEmailServ,iptQQ,iptFunds,iptAddress,iptRemark]){
+					obj.enabled=useExpiry;
+				}
+			}
+			public function parseFunctionDate(valueString:String, inputFormat:String):Date {
+				return DateFormatter.parseDateString(valueString);
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="用户名："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:Label width="100%" height="100%" fontSize="14" fontWeight="bold" paddingLeft="10"
+					 text="{data.@username}" textAlign="left" verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="EMail："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptEmail" width="100%" height="100%" text="{data.@email}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="密　码："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptPassword" width="100%" height="100%" prompt="不修改密码请留空"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="用户组："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:ComboBox id="cbbUserGroup" width="100%" height="100%"
+						change="cbbUserGroup_changeHandler(event)"
+						dataProvider="{UserWindow.userGroups}" labelField="@title"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:HRule width="100%"/>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="过期时间："
+					 textAlign="right" verticalAlign="middle"/>
+			<mx:DateField id="iptExpiry" width="100%" height="100%" buttonMode="true"
+						  text="{String(data.@expiry)}" useHandCursor="true" labelFunction="labelFunctionDate" parseFunction="parseFunctionDate"/>
+		</s:HGroup>
+		<s:Label id="lblExpiry" width="100%" height="100%" fontSize="14" fontWeight="normal"
+				 paddingLeft="10" text="剩余“{data.@servday}”天" verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="所属客服："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:ComboBox id="cbbServ" width="100%" height="100%" dataProvider="{userServs}"
+						labelField="@title"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="客服组："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:ComboBox id="cbbServGroup" width="100%" height="100%" dataProvider="{userServGroups}"
+						labelField="@title"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:HRule width="100%"/>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="姓名："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptNickname" width="100%" height="100%" text="{serv.@nickname}"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="电话："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptPhone" width="100%" height="100%" text="{serv.@phone}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="邮箱："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptEmailServ" width="100%" height="100%" text="{serv.@email}"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="QQ："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptQQ" width="100%" height="100%" text="{serv.@qq}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="资金量："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptFunds" width="100%" height="100%" text="{serv.@funds}"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="100%">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="地址："
+					 textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptAddress" width="100%" height="100%" text="{serv.@address}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<s:HGroup width="100%" height="100%">
+		<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" paddingTop="8" text="备注："
+				 textAlign="right" verticalAlign="top"/>
+		<s:TextArea id="iptRemark" width="100%" height="100%" text="{serv.@remark}"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="40" horizontalAlign="center">
+		<s:Button id="btnSave" x="201" width="132" height="100%" label="保存更改" chromeColor="#B60003"
+				  click="save_clickHandler(event)" color="#FFFFFF" focusColor="#960003"
+				  fontFamily="微软雅黑,黑体" fontSize="26" fontWeight="bold"/>
+	</s:HGroup>
+</component:Window>

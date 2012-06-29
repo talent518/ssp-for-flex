@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  width="516" height="520" creationComplete="creationCompleteHandler(event)"
+				  layout="vertical" maxButtonVisible="false" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" title="信息统计">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.console.utils.RemoteProxy;
+			
+			import mx.events.FlexEvent;
+			private static var _countWindow:CountWindow;
+			public static function get countWindow():CountWindow{
+				if(!_countWindow){
+					_countWindow=new CountWindow;
+				}
+				return _countWindow;
+			}
+			
+			public static function remove():void{
+				if(!_countWindow)
+					return;
+				_countWindow.nativeWindow.close();
+				_countWindow.removeAllChildren();
+				_countWindow.removeAllElements();
+				_countWindow=null;
+			}
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				addEventListener(Event.CLOSE,function(e:Event):void{
+					remove();
+				});
+				RemoteProxy.bind('Console.Count.Info.Succeed',function(request:XML):void{
+					data=request;
+				});
+				RemoteProxy.bind('Console.Count.Info.Failed',function(request:XML):void{
+					remove();
+					ShowDialog(request.text(),false);
+				});
+				RemoteProxy.send('Console.Count.Info',{});
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="用户数：{data.all.@user}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="操作系统数：{data.all.@stock}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="优先金股数：{data.all.@gold}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="投资组合数：{data.all.@invest}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="盘中直播数：{data.all.@broadcast}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="个股会诊数：{data.all.@consult}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:Label width="100%" height="30" fontSize="14" text="客户数：{data.all.@client}"
+			 verticalAlign="middle"/>
+	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
+			 paddingLeft="10" text="今日统计" verticalAlign="middle"/>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="注册用户数：{data.today.@regUser}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.today.@client}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="优先金股数：{data.today.@gold}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="投资组合数：{data.today.@invest}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="盘中直播数：{data.today.@broadcast}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="个股会诊数：{data.today.@consult}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:Label width="100%" height="30" fontSize="14" text="操作系统数：{data.today.@stock}"
+			 verticalAlign="middle"/>
+	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
+			 paddingLeft="10" text="一周内统计" verticalAlign="middle"/>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="注册用户数：{data.week.@regUser}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.week.@client}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="优先金股数：{data.week.@gold}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="投资组合数：{data.week.@invest}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="100%" fontSize="14" text="盘中直播数：{data.week.@broadcast}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="个股会诊数：{data.week.@consult}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
+	<s:Label width="100%" height="30" fontSize="14" text="操作系统数：{data.week.@stock}"
+			 verticalAlign="middle"/>
+</component:Window>
