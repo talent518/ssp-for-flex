@@ -276,20 +276,18 @@ package com.riaidea.text
 		 */
 		public function insertSprite(newSprite:Object, index:int = -1, autoRender:Boolean = true, cache:Boolean = false):void
 		{
+			//verify the index to insert
+			if (index < 0 || index > _textRenderer.length) index = _textRenderer.length;
+
 			try{
 				//create a instance of sprite
 				var spriteObj:DisplayObject = getSpriteFromObject(newSprite);
 			}catch(e:ReferenceError){
-				var sl:SWFLoader=new SWFLoader;
-				sl.addEventListener(Event.COMPLETE,function(e:Event):void{
-					var bitmap:ImageRenderer=new ImageRenderer((sl.content as Bitmap).bitmapData.clone());
-					bitmap.source=newSprite;
-					bitmap.name=String(index);
-					bitmap.width=sl.content.width;
-					bitmap.height=sl.content.height;
-					insertSprite(bitmap,index,autoRender,cache);
-				});
-				sl.load(newSprite);
+				var bitmap:ImageRenderer=new ImageRenderer;
+				bitmap.rtf=this;
+				bitmap.source=String(newSprite);
+				bitmap.name=String(index);
+				insertSprite(bitmap,index,autoRender,cache);
 				return;
 			}
 
@@ -303,15 +301,10 @@ package com.riaidea.text
 				spriteObj.height = lineHeight;
 				spriteObj.width = spriteObj.width * scaleRate;
 			}
-			
-			//verify the index to insert
-			if (index < 0 || index > _textRenderer.length) index = _textRenderer.length;			
 			//insert a placeholder into textfield by using replaceText method
 			_textRenderer.replaceText(index, index, _placeholder);			
-			//calculate a special textFormat for spriteObj's placeholder
-			var format:TextFormat = calcPlaceholderFormat(spriteObj.width, spriteObj.height);
-			//apply the textFormat to placeholder to make it as same size as the spriteObj
-			_textRenderer.setTextFormat(format, index, index + 1);	
+
+			setPlaceholderSize(spriteObj,index);	
 			
 			//adjust sprites index which come after this sprite
 			_spriteRenderer.adjustSpritesIndex(index, 1);
@@ -320,7 +313,11 @@ package com.riaidea.text
 			
 			//if autoRender, just do it
 			if (autoRender) _spriteRenderer.render();
-			
+		}
+		//set placeholder size
+		public function setPlaceholderSize(sprite:DisplayObject,index:int):void{
+			_textRenderer.setTextFormat(calcPlaceholderFormat(sprite.width,sprite.height), index, index + 1);	
+			_spriteRenderer.render();
 		}
 		
 		private function getSpriteFromObject(obj:Object):DisplayObject

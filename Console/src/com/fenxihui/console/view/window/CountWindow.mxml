@@ -64,14 +64,18 @@
 		<s:Label width="100%" height="100%" fontSize="14" text="个股会诊数：{data.all.@consult}"
 				 verticalAlign="middle"/>
 	</s:HGroup>
-	<s:Label width="100%" height="30" fontSize="14" text="客户数：{data.all.@client}"
-			 verticalAlign="middle"/>
+	<s:HGroup width="100%" height="30">
+		<s:Label width="100%" height="30" fontSize="14" text="客户数：{data.all.@client}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="在线用户：{data.all.@online}"
+				 verticalAlign="middle"/>
+	</s:HGroup>
 	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
 			 paddingLeft="10" text="今日统计" verticalAlign="middle"/>
 	<s:HGroup width="100%" height="30">
 		<s:Label width="100%" height="100%" fontSize="14" text="注册用户数：{data.today.@regUser}"
 				 verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.today.@client}"
+		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.today.@activeUser}"
 				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
@@ -93,7 +97,7 @@
 	<s:HGroup width="100%" height="30">
 		<s:Label width="100%" height="100%" fontSize="14" text="注册用户数：{data.week.@regUser}"
 				 verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.week.@client}"
+		<s:Label width="100%" height="100%" fontSize="14" text="活动用户数：{data.week.@activeUser}"
 				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">

@@ -125,6 +125,11 @@
 				return titleBar as TitleBar;
 			}
 			
+			override public function get closed():Boolean
+			{
+				return (!nativeWindow || nativeWindow.closed);
+			}
+			
 			private var backgroundAlpha:Number;
 			
 			override protected function createChildren():void{

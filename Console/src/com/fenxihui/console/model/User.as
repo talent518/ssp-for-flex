@@ -102,9 +102,11 @@ package com.fenxihui.console.model
 			trace('Login failed');
 			Loading.hide();
 			Params.isLogined=false;
-			Params.user.auth=null;
-			Params.user.password=null;
-			Params.saveUser();
+			if(request.@type.length()){
+				Params.user.auth=null;
+				Params.user.password=null;
+				Params.saveUser();
+			}
 			Main.setIconMenu(false);
 			MainWindow.remove();
 			ShowDialog(request.text(),false,function():void{

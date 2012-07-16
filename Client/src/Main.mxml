@@ -353,6 +353,7 @@
 				setIconMenu(true);
 			}
 			public static function exit():void{
+				System.gc();
 				NativeApplication.nativeApplication.icon.bitmaps = [];
 				NativeApplication.nativeApplication.exit();
 			}

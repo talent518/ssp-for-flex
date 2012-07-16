@@ -254,7 +254,7 @@
 			}
 			
 			public function readMessage():void{
-				RemoteProxy.bind('Consult.Receive',function(request:XML):void{
+				RemoteProxy.bind('Consult.Receive.'+userId,function(request:XML):void{
 					appendOutputMessage(XML(request.message));
 					nativeWindow.notifyUser(NotificationType.CRITICAL);
 					Main.addFlickerQueue('consult',Icons.Broadcast,"收到来自“"+nickname+"”的信息");
@@ -384,9 +384,18 @@
 				rtfInput.textField.setTextFormat(rtfInput.defaultTextFormat,beginIndex,endIndex);
 			}
 			
-			private var historyWindow:ConsultHistoryWindow=new ConsultHistoryWindow;
+			private var historyWindow:ConsultHistoryWindow;
 			protected function btnHistory_clickHandler(event:MouseEvent):void
 			{
+				if(!historyWindow){
+					historyWindow=new ConsultHistoryWindow;
+					historyWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						historyWindow.nativeWindow.close();
+						historyWindow.removeAllChildren();
+						historyWindow.removeAllElements();
+						historyWindow=null;
+					});
+				}
 				with(historyWindow){
 					open(true);
 					nativeWindow.activate();

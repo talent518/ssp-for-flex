@@ -27,10 +27,10 @@
 	<!-- A string value of the format <0-999>.<0-999>.<0-999> that represents application version which can be used to check for application upgrade. 
 	Values can also be 1-part or 2-part. It is not necessary to have a 3-part value.
 	An updated version of application must have a versionNumber value higher than the previous version. Required for namespace >= 2.5 . -->
-	<versionNumber>0.9.16</versionNumber>
+	<versionNumber>0.9.18</versionNumber>
 
 	<!-- A string value (such as "v1", "2.5", or "Alpha 1") that represents the version of the application, as it should be shown to users. Optional. -->
-	<versionLabel>V0.9.16</versionLabel>
+	<versionLabel>V0.9.18</versionLabel>
 
 	<!-- Description, displayed in the AIR application installer.
 	May have multiple values for each language. See samples or xsd schema file. Optional. -->
@@ -49,16 +49,16 @@
 		<content>[此值将由 Flash Builder 在输出 app.xml 中覆盖]</content>
 		
 		<!-- The title of the main window. Optional. -->
-		<title>全能股市操盘系统</title>
+		<!-- <title></title> -->
 
 		<!-- The type of system chrome to use (either "standard" or "none"). Optional. Default standard. -->
 		<systemChrome>none</systemChrome>
 
 		<!-- Whether the window is transparent. Only applicable when systemChrome is none. Optional. Default false. -->
-		<transparent>true</transparent>
+		<!-- <transparent>true</transparent> -->
 
 		<!-- Whether the window is initially visible. Optional. Default false. -->
-		<visible>false</visible>
+		<!-- <visible>false</visible> -->
 
 		<!-- Whether the user can minimize the window. Optional. Default true. -->
 		<!-- <minimizable></minimizable> -->
@@ -93,11 +93,11 @@
 
         <!-- Whether the app will begin auto-orienting on launch. Optional. Mobile only. Default false -->
 
-        <autoOrients>false</autoOrients>
+        <!-- <autoOrients>false</autoOrients> -->
 
         <!-- Whether the app launches in full screen. Optional. Mobile only. Default false -->
 
-        <fullScreen>false</fullScreen>
+        <!-- <fullScreen>false</fullScreen> -->
 
         <!-- The render mode for the app (either auto, cpu, or gpu). Optional. Mobile only. Default auto -->
 
@@ -105,6 +105,9 @@
 
 		<!-- Whether or not to pan when a soft keyboard is raised or lowered (either "pan" or "none").  Optional.  Defaults "pan." -->
 		<!-- <softKeyboardBehavior></softKeyboardBehavior> -->
+		<autoOrients>false</autoOrients>
+		<fullScreen>false</fullScreen>
+		<visible>false</visible>
     </initialWindow>
 
 	<!-- We recommend omitting the supportedProfiles element, -->
@@ -146,7 +149,7 @@
 	
 	<!-- Whether the application can be launched when the user clicks a link in a web browser.
 	Optional. Default false. -->
-	<allowBrowserInvocation>true</allowBrowserInvocation>
+	<!-- <allowBrowserInvocation></allowBrowserInvocation> -->
 
 	<!-- Listing of file types for which the application can register. Optional. -->
 	<!-- <fileTypes> -->

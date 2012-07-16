@@ -4,6 +4,8 @@ package com.fenxihui.desktop.model
 	import com.fenxihui.desktop.utils.Params;
 	import com.fenxihui.desktop.utils.RemoteProxy;
 	import com.fenxihui.desktop.view.Loading;
+	import com.fenxihui.desktop.view.window.BroadcastWindow;
+	import com.fenxihui.desktop.view.window.ConsultWindow;
 	import com.fenxihui.desktop.view.window.LoginWindow;
 	import com.fenxihui.desktop.view.window.LostPasswdWindow;
 	import com.fenxihui.desktop.view.window.MainWindow;
@@ -49,6 +51,8 @@ package com.fenxihui.desktop.model
 			bind('User.Logout',Logout);
 			var params:Object=(user.auth?{auth:user.auth}:{username:user.username,password:user.password});
 			params.timezone=-(new Date()).timezoneOffset*60;
+			params.broadcast=(BroadcastWindow.broadcastWindow.closed?0:1);
+			params.consult=(ConsultWindow.consultWindow.closed?0:1);
 			trace(params.timezone);
 			send('User.Login',params);
 		}
@@ -106,9 +110,11 @@ package com.fenxihui.desktop.model
 			trace('Login failed');
 			Loading.hide();
 			Params.isLogined=false;
-			Params.user.auth=null;
-			Params.user.password=null;
-			Params.saveUser();
+			if(request.@type.length()){
+				Params.user.auth=null;
+				Params.user.password=null;
+				Params.saveUser();
+			}
 			Main.setIconMenu(false);
 			MainWindow.remove();
 			ShowDialog(request.text(),false,function():void{

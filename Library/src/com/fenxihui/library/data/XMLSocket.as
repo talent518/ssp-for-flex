@@ -138,7 +138,8 @@ package com.fenxihui.library.data
 						return;
 					}
 					recvLength=socket.readInt();
-					if(recvLength<=0){
+					if(recvLength<=0 || recvLength==0x47455420){
+						recvLength=0;
 						return;
 					}
 					socket.readBytes(recvBuffer,recvedLength,socket.bytesAvailable>recvLength?recvLength:socket.bytesAvailable);
