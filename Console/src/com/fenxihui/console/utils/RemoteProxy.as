@@ -49,9 +49,6 @@ package com.fenxihui.console.utils
 				socket.send(XML('<request type="Connect.Key">'+sendKey+'</request>'));
 
 				Params.statusChangeEvent(0);
-				User.relogin();
-				while(sendQueues.length>0)
-					socket.send(XML('<request type="Connect.Data">'+Crypter.encode(sendQueues.shift().toXMLString(),sendKey)+'</request>'));
 			});
 			socket.bind(XMLSocket.CLOSE,function(e:Object):void{
 				receiveKey=sendKey='';
@@ -79,6 +76,10 @@ package com.fenxihui.console.utils
 				switch(xml.@type.toString()){
 					case 'Connect.Key':
 						receiveKey=xml.text();
+						
+						User.relogin();
+						while(sendQueues.length>0)
+							socket.send(XML('<request type="Connect.Data">'+Crypter.encode(sendQueues.shift().toXMLString(),sendKey)+'</request>'));
 						break;
 					case 'Connect.Data':
 						if(receiveKey.length>0){
