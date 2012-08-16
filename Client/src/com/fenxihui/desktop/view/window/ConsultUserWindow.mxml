@@ -5,7 +5,7 @@
 				   xmlns:component="com.fenxihui.library.component.*"
 				   xmlns:component1="com.fenxihui.library.component.*"
 				   minWidth="200" minHeight="496" creationComplete="initWindow();" frameRate="5"
-				   horizontalGap="5" layout="horizontal" paddingBottom="5" paddingLeft="5"
+				   horizontalGap="5" layout="vertical" paddingBottom="5" paddingLeft="5"
 				   paddingRight="5" paddingTop="5" title="分析师客户列表">
 	<fx:Script>
 		<![CDATA[
@@ -45,7 +45,7 @@
 			[Bindable]
 			public var userTree:XML;
 			
-			private static var userWindows:Array=[];
+			public static var userWindows:Object=new Object;
 			
 			protected function itemDoubleClickHandler(event:ListEvent):void
 			{
@@ -72,11 +72,41 @@
 					delete userWindows[cuid];
 				});
 			}
-			
+			protected function set refreshListEnable(value:Boolean):void{
+				refreshList.enabled=value;
+				if(value){
+					refreshList.setStyle('color',0xFFFFFF);
+					refreshList.setStyle('borderColor',0x960003);
+					refreshList.setStyle('backgroundColor',0xb60003);
+				}else{
+					refreshList.setStyle('color',0x333333);
+					refreshList.setStyle('borderColor',0x666666);
+					refreshList.setStyle('backgroundColor',0x999999);
+				}
+			}
+			protected function refresh_list():void{
+				refreshListEnable=false;
+				RemoteProxy.bind('Consult.Clients.Succeed',function(request:XML):void{
+					refreshListEnable=true;
+					userTree=request;
+				});
+				RemoteProxy.bind('Consult.Clients.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						refreshListEnable=true;
+					});
+				});
+				RemoteProxy.send('Consult.Clients',{});
+			}
 		]]>
 	</fx:Script>
 	<mx:Tree width="100%" height="100%" dataProvider="{userTree}" doubleClickEnabled="true"
 			 itemDoubleClick="itemDoubleClickHandler(event)"
 			 itemRenderer="com.fenxihui.desktop.view.item.ItemUser" showRoot="false"
 			 variableRowHeight="true"/>
+	<component:LabelBorder id="refreshList" width="100%" height="35" backgroundAlpha="1.0"
+						   backgroundColor="#b60002" borderColor="#960003" borderVisible="true"
+						   borderWeight="1" buttonMode="true" click="refresh_list()" color="#ffffff"
+						   cornerRadius="5" focusEnabled="true" fontFamily="微软雅黑" fontSize="20"
+						   fontWeight="bold" paddingLeft="5" paddingRight="5" text="刷新列表"
+						   textAlign="center" useHandCursor="true" verticalAlign="middle"/>
 </component1:Window>

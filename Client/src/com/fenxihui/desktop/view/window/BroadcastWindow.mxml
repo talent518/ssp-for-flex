@@ -98,7 +98,7 @@
 
 			private var fileReference:FileReference;
 			private var urlRequest:URLRequest;
-			private var imageTypes:FileFilter = new FileFilter("图片 (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg; *.jpeg; *.gif; *.png");
+			private static var imageTypes:FileFilter = new FileFilter("图片 (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg; *.jpeg; *.gif; *.png");
 
 			public function initWindow():void{
 				for each(var hRule:HRule in [hRuleResizeInputHeight1,hRuleResizeInputHeight2]){

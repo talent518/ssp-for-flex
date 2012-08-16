@@ -25,17 +25,17 @@
     <buildTarget buildTargetName="default">
       <airSettings airCertificatePath="D:/FenXiHui/signature.p12" airTimestamp="true" anePathSet="true" version="1">
         <airExcludes>
+          <pathEntry path="assets/DragManager_rejectCursor.png"/>
+          <pathEntry path="assets/DragManager_linkCursor.png"/>
           <pathEntry path="assets/category.gif"/>
-          <pathEntry path="assets/DragManager_moveCursor.png"/>
           <pathEntry path="assets/DataGrid_stretchCursor.png"/>
-          <pathEntry path="assets/CursorManager_busyCursor.png"/>
+          <pathEntry path="assets/DragManager_moveCursor.png"/>
           <pathEntry path="assets/DragManager_copyCursor.png"/>
           <pathEntry path="assets/noavatar_small.gif"/>
+          <pathEntry path="smileys"/>
           <pathEntry path="assets/noavatar_middle.gif"/>
           <pathEntry path="assets/DividedBox_horizontalCursor.png"/>
-          <pathEntry path="smileys"/>
-          <pathEntry path="assets/DragManager_linkCursor.png"/>
-          <pathEntry path="assets/DragManager_rejectCursor.png"/>
+          <pathEntry path="assets/CursorManager_busyCursor.png"/>
         </airExcludes>
         <anePaths/>
       </airSettings>

@@ -110,16 +110,21 @@
 						hRule.addEventListener(MouseEvent.MOUSE_UP,stopResize);
 					}
 				}
+				var isSingle:Boolean=(_consultWindow==this);
 				addEventListener(MouseEvent.MOUSE_UP,stopResize);
 				stage.frameRate=10;
 				addEventListener(Event.CLOSE,function(e:Event):void{
 					e.preventDefault();
 					RemoteProxy.bind('Consult.Close.Succeed',function(request:XML):void{
-						remove();
+						if(isSingle){
+							remove();
+						}
 					});
 					RemoteProxy.bind('Consult.Close.Failed',function(request:XML):void{
 						ShowDialog(request.text(),false,function():void{
-							remove();
+							if(isSingle){
+								remove();
+							}
 						});
 					});
 					RemoteProxy.send('Consult.Close',{userId:userId});

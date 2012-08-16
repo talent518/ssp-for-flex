@@ -5,6 +5,7 @@ package com.fenxihui.desktop.model
 	import com.fenxihui.desktop.utils.RemoteProxy;
 	import com.fenxihui.desktop.view.Loading;
 	import com.fenxihui.desktop.view.window.BroadcastWindow;
+	import com.fenxihui.desktop.view.window.ConsultUserWindow;
 	import com.fenxihui.desktop.view.window.ConsultWindow;
 	import com.fenxihui.desktop.view.window.LoginWindow;
 	import com.fenxihui.desktop.view.window.LostPasswdWindow;
@@ -23,6 +24,7 @@ package com.fenxihui.desktop.model
 
 	public class User extends Base
 	{
+		private static var multiConsult:Boolean=false;
 		public static function login(username:String,password:String,remember:Boolean=false,autoLogin:Boolean=false):void{
 			var user:Object=Params.user;
 			user.auth=null;
@@ -52,7 +54,15 @@ package com.fenxihui.desktop.model
 			var params:Object=(user.auth?{auth:user.auth}:{username:user.username,password:user.password});
 			params.timezone=-(new Date()).timezoneOffset*60;
 			params.broadcast=(BroadcastWindow.broadcastWindow.closed?0:1);
-			params.consult=(ConsultWindow.consultWindow.closed?0:1);
+			if(multiConsult){
+				params.consult=(ConsultUserWindow.consultUserWindow.closed?0:1);
+				params.consults='';
+				for(var k:* in ConsultUserWindow.userWindows){
+					params.consults+=((params.consults.length?',':'')+k);
+				}
+			}else{
+				params.consult=(ConsultWindow.consultWindow.closed?0:1);
+			}
 			trace(params.timezone);
 			send('User.Login',params);
 		}
@@ -85,6 +95,8 @@ package com.fenxihui.desktop.model
 			profile.sex=uint(request.user.profile.@sex.toString())?true:false;
 			profile.signature=request.user.profile.@signature.toString();
 
+			multiConsult=request.@multiConsult.toString()!="0";
+			
 			if(!Params.isLogined){
 				Params.isLogined=true;
 				Params.saveUser();
