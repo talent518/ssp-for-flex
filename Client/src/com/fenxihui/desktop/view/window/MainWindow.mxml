@@ -102,7 +102,7 @@
 				}
 				var f:Object=_mainWindow.flickers[type];
 				if(isJoin){
-					if(number<0 && f.number<Math.abs(number)){
+					if(f.number+number<0){
 						f.number=0;
 					}else{
 						f.number+=number;
@@ -112,7 +112,7 @@
 				}
 				(f.target as FunctionButton).number=f.number;
 				if(f.number>0){
-					Main.addFlickerQueue(type,f.icon,f.title+'('+number+')');
+					Main.addFlickerQueue(type,f.icon,f.title+'('+f.number+')');
 				}else{
 					Main.removeFlickerQueue(type);
 				}
