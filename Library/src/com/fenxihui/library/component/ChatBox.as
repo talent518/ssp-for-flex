@@ -80,7 +80,7 @@ package com.fenxihui.library.component
 		public function ChatBox(){
 			super();
 			_rtf=new RichTextField;
-			_rtf.html=true;
+			_rtf.isHtml=true;
 			_rtf.placeholderColor=0xffffff;
 			_rtf.placeholderMarginH=2;
 			_rtf.placeholderMarginV=0;

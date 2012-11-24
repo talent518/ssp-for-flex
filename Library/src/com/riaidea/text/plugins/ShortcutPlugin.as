@@ -81,7 +81,7 @@ package com.riaidea.text.plugins
 				var index:int = _target.content.lastIndexOf(item.shortcut, caret);
 				if (index > -1)
 				{
-					_target.replace(index, index + len, "", [ { src:item.src } ]);
+					_target.replaceText(index, index + len, "", [ { src:item.src } ]);
 					caret--;
 					//当改变的文本长度为1时，只需匹配一次即可
 					if (offset == 1) break;

@@ -170,20 +170,32 @@ package com.riaidea.text
 			return _numSprites; 
 		}
 		
-		internal function exportXML():XML
-		{
-			var arr:Array = [];
+		internal function export(beginIndex:int=0,endIndex:int=0):Array{
+			var sprites:Array = [];
+			var info:Object;
 			for (var s:* in _spriteIndices)
 			{
-				var info:Object = { src:(s is ImageRenderer)?s.source:getQualifiedClassName(s), index:s.name };
-				arr.push(info);
+				if((beginIndex==0 && endIndex==0) || (beginIndex!=endIndex && beginIndex<=s.name && s.name<=endIndex)){
+					info = { src:(s is ImageRenderer)?s.source:getQualifiedClassName(s), index:s.name };
+					sprites.push(info);
+				}
 			}
-			if (arr.length > 1) arr.sortOn("index", Array.NUMERIC);
+			if (sprites.length > 1) sprites.sortOn("index", Array.NUMERIC);
+			for(var i:int=0;i<sprites.length;i++){
+				sprites[i].index=sprites[i].index-i-beginIndex;
+			}
+			return sprites;
+		}
+		
+		internal function exportXML(beginIndex:int=0,endIndex:int=0):XML
+		{
+			var sprites:Array = export(beginIndex,endIndex);
 			
+			var node:XML;
 			var xml:XML =<sprites/>;
-			for (var i:int = 0; i < arr.length; i++)
+			for each(var s:* in sprites)
 			{
-				var node:XML = <sprite src={arr[i].src} index={arr[i].index - i} />;
+				node = <sprite src={s.src} index={s.index} />;
 				xml.appendChild(node);
 			}
 			return xml;

@@ -9,15 +9,22 @@ package com.riaidea.text
 	import com.fenxihui.library.component.ImageBorder;
 	import com.riaidea.text.plugins.IRTFPlugin;
 	
+	import flash.desktop.Clipboard;
+	import flash.desktop.ClipboardFormats;
+	import flash.desktop.ClipboardTransferMode;
 	import flash.display.Bitmap;
 	import flash.display.DisplayObject;
+	import flash.display.NativeMenuItem;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
 	import flash.geom.Rectangle;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
 	import flash.text.TextLineMetrics;
+	import flash.ui.ContextMenu;
+	import flash.ui.Keyboard;
 	import flash.utils.Dictionary;
 	import flash.utils.getDefinitionByName;
 	
@@ -42,33 +49,33 @@ package com.riaidea.text
 	 * 
 	 * @example 下面的例子演示了RichTextField基本使用方法：
 	 * <listing>
-		var rtf:RichTextField = new RichTextField();			
-		rtf.x = 10;
-		rtf.y = 10;
-		addChild(rtf);
-
-		//设置rtf的尺寸大小
-		rtf.setSize(500, 400);
-		//设置rtf的类型
-		rtf.type = RichTextField.INPUT;
-		//设置rtf的默认文本格式
-		rtf.defaultTextFormat = new TextFormat("Arial", 12, 0x000000);
-
-		//追加文本和显示元素到rtf中
-		rtf.append("Hello, World!", [ { index:5, src:SpriteClassA }, { index:13, src:SpriteClassB } ]);
-		//替换指定位置的内容为新的文本和显示元素
-		rtf.replace(8, 13, "世界", [ { src:SpriteClassC } ]);</listing>
+	 var rtf:RichTextField = new RichTextField();			
+	 rtf.x = 10;
+	 rtf.y = 10;
+	 addChild(rtf);
+	 
+	 //设置rtf的尺寸大小
+	 rtf.setSize(500, 400);
+	 //设置rtf的类型
+	 rtf.type = RichTextField.INPUT;
+	 //设置rtf的默认文本格式
+	 rtf.defaultTextFormat = new TextFormat("Arial", 12, 0x000000);
+	 
+	 //追加文本和显示元素到rtf中
+	 rtf.append("Hello, World!", [ { index:5, src:SpriteClassA }, { index:13, src:SpriteClassB } ]);
+	 //替换指定位置的内容为新的文本和显示元素
+	 rtf.replace(8, 13, "世界", [ { src:SpriteClassC } ]);</listing>
 	 * 
 	 * 
 	 * @example 下面是一个RichTextField的内容的XML例子，你可以使用importXML()来导入具有这样格式的XML内容，或用exportXML()导出这样的XML内容方便保存和传输：
 	 * <listing>
-		&lt;rtf&gt;
-		  &lt;text&gt;Hello, World!&lt;/text&gt;
-		  &lt;sprites&gt;
-				&lt;sprite src="SpriteClassA" index="5"/&gt;
-				&lt;sprite src="SpriteClassB" index="13"/&gt;
-		  &lt;/sprites&gt;
-		&lt;/rtf&gt;</listing>
+	 &lt;rtf&gt;
+	 &lt;text&gt;Hello, World!&lt;/text&gt;
+	 &lt;sprites&gt;
+	 &lt;sprite src="SpriteClassA" index="5"/&gt;
+	 &lt;sprite src="SpriteClassB" index="13"/&gt;
+	 &lt;/sprites&gt;
+	 &lt;/rtf&gt;</listing>
 	 */
 	public class RichTextField extends UIComponent
 	{
@@ -82,21 +89,17 @@ package com.riaidea.text
 		private var _placeholderMarginH:int;	
 		private var _placeholderMarginV:int;
 		
-		/**
-		 * 一个布尔值，指示文本字段是否以HTML形式插入文本。
-		 * @default false
-		 */
-		public var html:Boolean;
+		private var _isHtml:Boolean=false;
 		/**
 		 * 指示文本字段的显示元素的行高（最大高度）。
 		 * @default 0
 		 */
-		public var lineHeight:int;
+		public var lineHeight:int=0;
 		/**
 		 * 一个布尔值，指示当追加内容到RichTextField后是否自动滚动到最底部。
 		 * @default true
 		 */
-		public var autoScroll:Boolean;		
+		public var autoScroll:Boolean=false;		
 		/**
 		 * 用于指定动态类型的RichTextField。
 		 */
@@ -120,15 +123,12 @@ package com.riaidea.text
 			//text renderer
 			_textRenderer = new TextRenderer();
 			addChild(_textRenderer);
-
+			
 			//sprite renderer
 			_spriteRenderer = new SpriteRenderer(this);
 			addChild(_spriteRenderer.container);
 			
 			type = DYNAMIC;
-			lineHeight = 0;
-			html = false;
-			autoScroll = false;
 			
 			//default placeholder
 			_placeholder = String.fromCharCode(12288);
@@ -142,6 +142,244 @@ package com.riaidea.text
 			
 			//make sure that can't input placeholder
 			_textRenderer.restrict = "^" + _placeholder;
+			
+			
+			//上下文菜单
+			var menu:ContextMenu=new ContextMenu;
+			
+			var item:NativeMenuItem;
+			
+			item=new NativeMenuItem("剪切");
+			item.name="cut";
+			item.keyEquivalent='x';
+			item.keyEquivalentModifiers=[Keyboard.CONTROL];
+			menu.addItem(item);
+			
+			item=new NativeMenuItem("复制");
+			item.name="copy";
+			item.keyEquivalent='c';
+			item.keyEquivalentModifiers=[Keyboard.CONTROL];
+			menu.addItem(item);
+			
+			item=new NativeMenuItem("粘贴");
+			item.name="parse";
+			item.keyEquivalent='v';
+			item.keyEquivalentModifiers=[Keyboard.CONTROL];
+			item.addEventListener(Event.SELECT,function(e:Event):void{
+			});
+			menu.addItem(item);
+			
+			item=new NativeMenuItem("",true);
+			menu.addItem(item);
+			
+			item=new NativeMenuItem("删除");
+			item.name="delete";
+			item.keyEquivalent='d';
+			item.keyEquivalentModifiers=[Keyboard.CONTROL];
+			menu.addItem(item);
+			
+			item=new NativeMenuItem("全选");
+			item.name="all";
+			item.keyEquivalent='a';
+			item.keyEquivalentModifiers=[Keyboard.CONTROL];
+			menu.addItem(item);
+			
+			menu.addEventListener(Event.SELECT,function(e:Event):void{
+				menuItemHandler(e.target.name);
+			});
+			_textRenderer.contextMenu=menu;
+			
+			addEventListener(KeyboardEvent.KEY_DOWN,function(e:KeyboardEvent):void{
+				if(e.ctrlKey){
+					if(e.keyCode==Keyboard.X){
+						e.preventDefault();
+						menuItemHandler('cut');
+					}
+					if(e.keyCode==Keyboard.C){
+						e.preventDefault();
+						menuItemHandler('copy');
+					}
+					if(e.keyCode==Keyboard.V){
+						e.preventDefault();
+						menuItemHandler('parse');
+					}
+					if(e.keyCode==Keyboard.A){
+						e.preventDefault();
+						menuItemHandler('all');
+					}
+				}
+			});
+			
+		}
+		private function copyToClipboard():void{
+			if(_textRenderer.selectionEndIndex<=_textRenderer.selectionBeginIndex){
+				return;
+			}
+			var rtf:XML=exportXML(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex);
+			
+			var cb:Clipboard=Clipboard.generalClipboard;
+			cb.clear();
+			if(_isHtml){
+				cb.setData(ClipboardFormats.HTML_FORMAT,rtf.htmlText);
+			}else{
+				cb.setData(ClipboardFormats.TEXT_FORMAT,rtf.text);
+			}
+			cb.setData('xml:rtf',rtf);
+			trace('rtf:',rtf.toXMLString());
+		}
+		private function menuItemHandler(key:String):void{
+			trace('剪切板操作：',key);
+			switch(key){
+				case 'cut':
+					copyToClipboard();
+					_textRenderer.replaceSelectedText("");
+					break;
+				case 'copy':
+					copyToClipboard();
+					break;
+				case 'parse':
+					var cb:Clipboard=Clipboard.generalClipboard;
+					if(cb.hasFormat('xml:rtf')){
+						var rtf:XML=cb.getData('xml:rtf') as XML;
+						trace('xml:rtf',rtf.toXMLString());
+						importXML(rtf,_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex);
+					}else if(cb.hasFormat(ClipboardFormats.HTML_FORMAT)){
+						var html:String=cb.getData(ClipboardFormats.HTML_FORMAT) as String;
+						trace(ClipboardFormats.HTML_FORMAT,html);
+						replaceText(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,html);
+					}else if(cb.hasFormat(ClipboardFormats.TEXT_FORMAT)){
+						var text:String=cb.getData(ClipboardFormats.TEXT_FORMAT) as String;
+						trace(ClipboardFormats.TEXT_FORMAT,text);
+						_textRenderer.replaceSelectedText(text);
+						_textRenderer.setTextFormat(defaultTextFormat,_textRenderer.caretIndex-text.length,_textRenderer.caretIndex);
+					}else{
+						trace('ClipBoardFormat:',cb.formats.join(','));
+					}
+					break;
+				case 'delete':
+					_textRenderer.replaceSelectedText("");
+					break;
+				case 'all':
+					_textRenderer.setSelection(0,_textRenderer.length);
+					break;
+			}
+		}
+		public function getHtml(beginIndex:int,endIndex:int):String{
+			if(beginIndex>=endIndex){
+				return "";
+			}
+			var tf:TextField=new TextField;
+			tf.multiline=true;
+			tf.htmlText=_textRenderer.htmlText;
+			if(endIndex<_textRenderer.length){
+				tf.replaceText(endIndex,_textRenderer.length,"");
+			}
+			if(beginIndex>0){
+				tf.replaceText(0,beginIndex,"");
+			}
+			var html:String=tf.htmlText.split(_placeholder).join("");
+			trace('getHtml:',html);
+			return html;
+		}
+		private function isNewlineChar(str:String,i:int):Boolean{
+			var code:int=str.charCodeAt(i);
+			return code==13 || code==10;
+		}
+		public function replaceHtml(beginIndex:int,endIndex:int,html:String,newSprites:Array = null):void{
+			var tf:TextField=new TextField;
+			tf.multiline=true;
+			tf.htmlText=html;
+			var lines:int=0,i:int=0,j:int;
+			while((j=tf.htmlText.indexOf('</P>',i))!=-1){
+				lines++;
+				i=j+4;
+			}
+			var rText:String=(lines<tf.numLines?tf.text.substr(0,tf.text.length-1):tf.text);
+			trace('html:',rText,tf.htmlText);
+			
+			var isNewLineBegin:Boolean=isNewlineChar(_textRenderer.text,beginIndex-1);
+			
+			var isNewLineEnd:Boolean=isNewlineChar(_textRenderer.text,endIndex+(beginIndex==endIndex?0:1));
+
+			var htmlText:String=getHtml(0,beginIndex-(isNewLineBegin?1:0))+tf.htmlText+getHtml(endIndex+(isNewLineEnd?1:0),_textRenderer.length);
+			trace(htmlText);
+			
+			trace('replace before:',isNewLineBegin,isNewLineEnd,_textRenderer.text);
+
+			replaceText(beginIndex,endIndex,rText,newSprites);
+
+			var sprites:Array=_spriteRenderer.export();
+			for each(var s:* in sprites){
+				trace('sprite:',s.index,s.src);
+			}
+
+			var beginSpriteNum:int=0;
+			for(i=0;i<=beginIndex;i++){
+				if(isSpriteAt(i)){
+					beginSpriteNum++;
+				}
+			}
+			var endSpriteNum:int=beginSpriteNum+newSprites.length;
+
+			var beginCharIndex:int=beginIndex-1;
+			var endCharIndex:int=beginIndex+rText.length+newSprites.length;
+			
+			isNewLineBegin=isNewlineChar(_textRenderer.text,beginCharIndex);
+			isNewLineEnd=isNewlineChar(_textRenderer.text,endCharIndex);
+
+			var isNewLineBegin2:Boolean=isNewlineChar(_textRenderer.text,beginCharIndex+1);
+			
+			var isNewLineLast:Boolean=isNewlineChar(_textRenderer.text,_textRenderer.text.length-1);
+			
+			trace('replace after',isNewLineBegin,isNewLineEnd,_textRenderer.text);
+			_textRenderer.htmlText=htmlText;
+
+			trace('htmlText:',_textRenderer.text);
+			if(!isNewLineBegin && isNewlineChar(_textRenderer.text,beginCharIndex-beginSpriteNum)){
+				_textRenderer.setSelection(beginCharIndex-beginSpriteNum,beginCharIndex-beginSpriteNum+1);
+				_textRenderer.replaceSelectedText("");
+				trace('first fixed:',_textRenderer.text);
+			}
+			if(!isNewLineBegin && isNewlineChar(_textRenderer.text,beginCharIndex-beginSpriteNum+1)){
+				_textRenderer.setSelection(beginCharIndex-beginSpriteNum+1,beginCharIndex-beginSpriteNum+2);
+				_textRenderer.replaceSelectedText("");
+			}
+			if(!isNewLineEnd && isNewlineChar(_textRenderer.text,endCharIndex-endSpriteNum)){
+				_textRenderer.setSelection(endCharIndex-endSpriteNum,endCharIndex-endSpriteNum+1);
+				_textRenderer.replaceSelectedText("");
+				trace('second fixed:',_textRenderer.text);
+			}
+			i=0;
+			while((j=_textRenderer.htmlText.indexOf('</P>',i))!=-1){
+				lines++;
+				i=j+4;
+			}
+			if(lines<_textRenderer.numLines ||(!isNewLineLast && isNewlineChar(_textRenderer.text,_textRenderer.text.length-1))){
+				_textRenderer.setSelection(_textRenderer.text.length-1,_textRenderer.text.length);
+				_textRenderer.replaceSelectedText("");
+			}
+			trace('ok:',_textRenderer.text);
+			_textRenderer.setSelection(endCharIndex-endSpriteNum,endCharIndex-endSpriteNum);
+			
+			insertSprites(sprites,0,_textRenderer.length-1);
+		}
+		
+		/**
+		 * 一个布尔值，指示文本字段是否以HTML形式插入文本。
+		 * @default false
+		 */
+		public function get isHtml():Boolean
+		{
+			return _isHtml;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set isHtml(value:Boolean):void
+		{
+			_isHtml = value;
+			_textRenderer.useRichTextClipboard=value;
 		}
 		
 		/**
@@ -161,10 +399,10 @@ package com.riaidea.text
 			if (newText || autoWordWrap){
 				if(newText) newText = newText.split("\r").join("\n");
 				//plus a newline(\n) only if append as normal text 
-				if (autoWordWrap && !html)
+				if (autoWordWrap && !_isHtml)
 					newText += "\n";
 				_textRenderer.recoverDefaultFormat();
-				if (html){
+				if (_isHtml){
 					//make sure the new text have the default text format
 					_textRenderer.htmlText += "<p>" + newText + "</p>";				
 				}else{
@@ -173,14 +411,14 @@ package com.riaidea.text
 					_textRenderer.setTextFormat(format, oldLength, _textRenderer.length);
 				}
 				//record text length added
-				if (html || (autoWordWrap && !html))
+				if (_isHtml || (autoWordWrap && !_isHtml))
 					textLength = _textRenderer.length - oldLength - 1;
 				else
 					textLength = _textRenderer.length - oldLength;
 			}
 			
 			//append sprites
-			var newline:Boolean = html && (oldLength != 0);
+			var newline:Boolean = _isHtml && (oldLength != 0);
 			insertSprites(newSprites, oldLength, oldLength + textLength, newline);
 			
 			//auto scroll			
@@ -204,7 +442,7 @@ package com.riaidea.text
 		 * @param	newText 要替换的新文本。
 		 * @param	newSprites 要替换的显示元素数组，每个元素包含src和index两个属性，如：{src:sprite, index:1}。
 		 */
-		public function replace(startIndex:int, endIndex:int, newText:String, newSprites:Array = null):void
+		public function replaceText(startIndex:int, endIndex:int, newText:String, newSprites:Array = null):void
 		{
 			//replace text			
 			var oldLength:int = _textRenderer.length;
@@ -278,7 +516,7 @@ package com.riaidea.text
 		{
 			//verify the index to insert
 			if (index < 0 || index > _textRenderer.length) index = _textRenderer.length;
-
+			
 			try{
 				//create a instance of sprite
 				var spriteObj:DisplayObject = getSpriteFromObject(newSprite);
@@ -290,7 +528,7 @@ package com.riaidea.text
 				insertSprite(bitmap,index,autoRender,cache);
 				return;
 			}
-
+			
 			if (spriteObj == null) throw Error("Specific sprite:" + newSprite + " is not a valid display object!");
 			
 			if (cache) spriteObj.cacheAsBitmap = true;
@@ -303,7 +541,7 @@ package com.riaidea.text
 			}
 			//insert a placeholder into textfield by using replaceText method
 			_textRenderer.replaceText(index, index, _placeholder);			
-
+			
 			setPlaceholderSize(spriteObj,index);	
 			
 			//adjust sprites index which come after this sprite
@@ -458,7 +696,7 @@ package com.riaidea.text
 		{
 			_placeholderMarginV = value;
 		}
-
+		
 		/**
 		 * 指示显示元素占位符的颜色。
 		 * @default 0xffffff
@@ -467,7 +705,7 @@ package com.riaidea.text
 		{
 			_placeholderColor = value;
 		}
-
+		
 		/**
 		 * 返回文本字段中的内容（包括显示元素的占位符）。
 		 */
@@ -549,18 +787,18 @@ package com.riaidea.text
 		 * 导出XML格式的RichTextField的文本和显示元素内容。
 		 * @return
 		 */
-		public function exportXML():XML
+		public function exportXML(beginIndex:int=0,endIndex:int=0):XML
 		{
 			var xml:XML =<rtf/>;
-			if (html) 
+			if (_isHtml) 
 			{
-				xml.htmlText = _textRenderer.htmlText.split(_placeholder).join("");
+				xml.htmlText = String(beginIndex==endIndex?_textRenderer.htmlText:getHtml(beginIndex,endIndex)).split(_placeholder).join("");
 			}else
 			{
-				xml.text = _textRenderer.text.split(_placeholder).join("");
+				xml.text = String(beginIndex==endIndex?_textRenderer.text:_textRenderer.text.substring(beginIndex,endIndex)).split(_placeholder).join("");
 			}
 			
-			xml.sprites = _spriteRenderer.exportXML();
+			xml.sprites = _spriteRenderer.exportXML(beginIndex,endIndex);
 			return xml;
 		}
 		
@@ -568,7 +806,7 @@ package com.riaidea.text
 		 * 导入指定XML格式的文本和显示元素内容。
 		 * @param	data 具有指定格式的XML内容。
 		 */
-		public function importXML(data:XML):void
+		public function importXML(data:XML,beginIndex:int=0,endIndex:int=0):void
 		{
 			var content:String = "";		
 			if (data.hasOwnProperty("htmlText")) content += data.htmlText;
@@ -578,16 +816,21 @@ package com.riaidea.text
 			for (var i:int = 0; i < data.sprites.sprite.length(); i++)
 			{
 				var node:XML = data.sprites.sprite[i];
-				var sprite:Object = { };
+				var sprite:Object = {};
 				sprite.src = String(node.@src);
 				//correct the index if import as html
-				if (html)
-					sprite.index = int(node.@index) + 1;
-				else
-					sprite.index = int(node.@index);
+				sprite.index = int(node.@index);
 				sprites.push(sprite);
 			}
-			append(content, sprites);
+			if(endIndex || beginIndex){
+				if(data.hasOwnProperty("htmlText")){
+					replaceHtml(beginIndex,endIndex,content,sprites);
+				}else{
+					replaceText(beginIndex,endIndex,content,sprites);
+				}
+			}else{
+				append(content, sprites);
+			}
 		}
 		
 		/**
