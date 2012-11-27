@@ -14,6 +14,7 @@ package com.riaidea.text
 	import flash.desktop.ClipboardFormats;
 	import flash.desktop.ClipboardTransferMode;
 	import flash.display.Bitmap;
+	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
 	import flash.display.NativeMenuItem;
 	import flash.display.Sprite;
@@ -36,6 +37,7 @@ package com.riaidea.text
 	import mx.controls.SWFLoader;
 	import mx.core.Container;
 	import mx.core.UIComponent;
+	import mx.graphics.codec.JPEGEncoder;
 	
 	
 	/**
@@ -147,40 +149,65 @@ package com.riaidea.text
 			//make sure that can't input placeholder
 			_textRenderer.restrict = "^" + _placeholder;
 			
-			
+			addEventListener(KeyboardEvent.KEY_DOWN,function(e:KeyboardEvent):void{
+				if(e.ctrlKey){
+					if(type==INPUT && e.keyCode==Keyboard.X){
+						e.preventDefault();
+						menuItemHandler('cut');
+					}
+					if(e.keyCode==Keyboard.C){
+						e.preventDefault();
+						menuItemHandler('copy');
+					}
+					if(type==INPUT && e.keyCode==Keyboard.V){
+						e.preventDefault();
+						menuItemHandler('parse');
+					}
+					if(e.keyCode==Keyboard.A){
+						e.preventDefault();
+						menuItemHandler('all');
+					}
+				}
+			});
+		}
+		private function setContextMenu(isInput:Boolean):void{
 			//上下文菜单
 			var menu:ContextMenu=new ContextMenu;
 			
 			var item:NativeMenuItem;
 			
-			item=new NativeMenuItem("剪切");
-			item.name="cut";
-			item.keyEquivalent='x';
-			item.keyEquivalentModifiers=[Keyboard.CONTROL];
-			menu.addItem(item);
+			if(isInput){
+				item=new NativeMenuItem("剪切");
+				item.name="cut";
+				item.keyEquivalent='x';
+				item.keyEquivalentModifiers=[Keyboard.CONTROL];
+				menu.addItem(item);
+			}
 			
 			item=new NativeMenuItem("复制");
 			item.name="copy";
 			item.keyEquivalent='c';
 			item.keyEquivalentModifiers=[Keyboard.CONTROL];
 			menu.addItem(item);
-			
-			item=new NativeMenuItem("粘贴");
-			item.name="parse";
-			item.keyEquivalent='v';
-			item.keyEquivalentModifiers=[Keyboard.CONTROL];
-			item.addEventListener(Event.SELECT,function(e:Event):void{
-			});
-			menu.addItem(item);
+
+			if(isInput){
+				item=new NativeMenuItem("粘贴");
+				item.name="parse";
+				item.keyEquivalent='v';
+				item.keyEquivalentModifiers=[Keyboard.CONTROL];
+				menu.addItem(item);
+			}
 			
 			item=new NativeMenuItem("",true);
 			menu.addItem(item);
 			
-			item=new NativeMenuItem("删除");
-			item.name="delete";
-			item.keyEquivalent='d';
-			item.keyEquivalentModifiers=[Keyboard.CONTROL];
-			menu.addItem(item);
+			if(isInput){
+				item=new NativeMenuItem("删除");
+				item.name="delete";
+				item.keyEquivalent='d';
+				item.keyEquivalentModifiers=[Keyboard.CONTROL];
+				menu.addItem(item);
+			}
 			
 			item=new NativeMenuItem("全选");
 			item.name="all";
@@ -192,28 +219,6 @@ package com.riaidea.text
 				menuItemHandler(e.target.name);
 			});
 			_textRenderer.contextMenu=menu;
-			
-			addEventListener(KeyboardEvent.KEY_DOWN,function(e:KeyboardEvent):void{
-				if(e.ctrlKey){
-					if(e.keyCode==Keyboard.X){
-						e.preventDefault();
-						menuItemHandler('cut');
-					}
-					if(e.keyCode==Keyboard.C){
-						e.preventDefault();
-						menuItemHandler('copy');
-					}
-					if(e.keyCode==Keyboard.V){
-						e.preventDefault();
-						menuItemHandler('parse');
-					}
-					if(e.keyCode==Keyboard.A){
-						e.preventDefault();
-						menuItemHandler('all');
-					}
-				}
-			});
-			
 		}
 		private function copyToClipboard():void{
 			if(_textRenderer.selectionEndIndex<=_textRenderer.selectionBeginIndex){
@@ -247,6 +252,9 @@ package com.riaidea.text
 						var rtf:XML=cb.getData('xml:rtf') as XML;
 						trace('xml:rtf',rtf.toXMLString());
 						importXML(rtf,_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex);
+					}else if(cb.hasFormat(ClipboardFormats.BITMAP_FORMAT)){
+						var bitmap:BitmapData=cb.getData(ClipboardFormats.BITMAP_FORMAT) as BitmapData;
+						trace(ClipboardFormats.HTML_FORMAT,Base64Encode(new JPEGEncoder(100).encode(bitmap)));
 					}else if(cb.hasFormat(ClipboardFormats.HTML_FORMAT)){
 						var html:String=cb.getData(ClipboardFormats.HTML_FORMAT) as String;
 						trace(ClipboardFormats.HTML_FORMAT,html);
@@ -694,6 +702,7 @@ package com.riaidea.text
 			{
 				_textRenderer.addEventListener(Event.CHANGE, changeHandler);
 			}
+			setContextMenu(_textRenderer.type==INPUT);
 		}
 		
 		/**
@@ -800,7 +809,7 @@ package com.riaidea.text
 		public function get defaultTextFormat():TextFormat
 		{
 			return _textRenderer.defaultTextFormat;
-		}		
+		}
 		
 		public function set defaultTextFormat(format:TextFormat):void
 		{

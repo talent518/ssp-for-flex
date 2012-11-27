@@ -134,7 +134,8 @@ package com.riaidea.text
 		
 		internal function clear():void
 		{
-			this.text = "";
+			this.htmlText='';
+			this.text='';
 			_oldLength = 0;
 			_scrollHeight = 0;
 		}
