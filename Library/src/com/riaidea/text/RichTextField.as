@@ -6,6 +6,7 @@
 
 package com.riaidea.text
 {
+	
 	import com.fenxihui.library.component.ImageBorder;
 	import com.riaidea.text.plugins.IRTFPlugin;
 	
@@ -19,14 +20,17 @@ package com.riaidea.text
 	import flash.events.Event;
 	import flash.events.FocusEvent;
 	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
 	import flash.text.TextLineMetrics;
 	import flash.ui.ContextMenu;
 	import flash.ui.Keyboard;
+	import flash.ui.Mouse;
 	import flash.utils.Dictionary;
 	import flash.utils.getDefinitionByName;
+	import flash.utils.getQualifiedClassName;
 	
 	import mx.controls.Image;
 	import mx.controls.SWFLoader;
@@ -246,12 +250,11 @@ package com.riaidea.text
 					}else if(cb.hasFormat(ClipboardFormats.HTML_FORMAT)){
 						var html:String=cb.getData(ClipboardFormats.HTML_FORMAT) as String;
 						trace(ClipboardFormats.HTML_FORMAT,html);
-						replaceText(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,html);
+						replaceHtml(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,html);
 					}else if(cb.hasFormat(ClipboardFormats.TEXT_FORMAT)){
 						var text:String=cb.getData(ClipboardFormats.TEXT_FORMAT) as String;
 						trace(ClipboardFormats.TEXT_FORMAT,text);
-						_textRenderer.replaceSelectedText(text);
-						_textRenderer.setTextFormat(defaultTextFormat,_textRenderer.caretIndex-text.length,_textRenderer.caretIndex);
+						replaceText(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,text);
 					}else{
 						trace('ClipBoardFormat:',cb.formats.join(','));
 					}
@@ -332,6 +335,8 @@ package com.riaidea.text
 			var isNewLineLast:Boolean=isNewlineChar(_textRenderer.text,_textRenderer.text.length-1);
 			
 			trace('replace after',isNewLineBegin,isNewLineEnd,_textRenderer.text);
+			
+			_spriteRenderer.clear();
 			_textRenderer.htmlText=htmlText;
 
 			trace('htmlText:',_textRenderer.text);
@@ -394,6 +399,8 @@ package com.riaidea.text
 			var scrollV:int = _textRenderer.scrollV;
 			var oldLength:int = _textRenderer.length;
 			var textLength:int = 0;
+
+			var isNewline:Boolean=isNewlineChar(_textRenderer.text,oldLength-1);
 			
 			if (!newText) newText = "";
 			if (newText || autoWordWrap){
@@ -416,10 +423,24 @@ package com.riaidea.text
 				else
 					textLength = _textRenderer.length - oldLength;
 			}
-			
+
 			//append sprites
 			var newline:Boolean = _isHtml && (oldLength != 0);
-			insertSprites(newSprites, oldLength, oldLength + textLength, newline);
+			var i:int,indexes:Array=[];
+			if(newSprites){
+				for(i=0;i<newSprites.length;i++){
+					indexes.push(newSprites[i].index);
+				}
+				
+				if(!isNewline){
+					trace('Not is new line!');
+					for(i=0;i<newSprites.length;i++){
+						newSprites[i].index++;
+					}
+				}
+			}
+			trace('insertSprites',oldLength,textLength,indexes.join(','));
+			insertSprites(newSprites, oldLength, oldLength + textLength);
 			
 			//auto scroll			
 			if (autoScroll && _textRenderer.scrollV != _textRenderer.maxScrollV) 
@@ -462,9 +483,8 @@ package com.riaidea.text
 			{
 				_spriteRenderer.removeSprite(i);
 			}
-			
 			//adjust sprites after startIndex
-			var adjusted:Boolean = _spriteRenderer.adjustSpritesIndex(startIndex - 1, _textRenderer.length - oldLength);
+			var adjusted:Boolean = _spriteRenderer.adjustSpritesIndex(startIndex+_textRenderer.length - oldLength, _textRenderer.length - oldLength);
 			
 			//insert sprites
 			insertSprites(newSprites, startIndex, startIndex + textLength);
@@ -499,8 +519,10 @@ package com.riaidea.text
 					continue;
 				}
 				
-				if (newline && index > 0 && index < maxIndex - startIndex) index += startIndex + i - 1;
-				else index += startIndex + i;		
+				if (newline && index > 0 && index < maxIndex - startIndex)
+					index += startIndex + i - 1;
+				else
+					index += startIndex + i;
 				insertSprite(sprite, index, false, obj.cache);
 			}
 		}
@@ -548,7 +570,7 @@ package com.riaidea.text
 			_spriteRenderer.adjustSpritesIndex(index, 1);
 			//insert spriteObj to specific index and render it if it's visible
 			_spriteRenderer.insertSprite(spriteObj, index);
-			
+
 			//if autoRender, just do it
 			if (autoRender) _spriteRenderer.render();
 		}
@@ -806,7 +828,7 @@ package com.riaidea.text
 		 * 导入指定XML格式的文本和显示元素内容。
 		 * @param	data 具有指定格式的XML内容。
 		 */
-		public function importXML(data:XML,beginIndex:int=0,endIndex:int=0):void
+		public function importXML(data:XML,beginIndex:int=-1,endIndex:int=-1):void
 		{
 			var content:String = "";		
 			if (data.hasOwnProperty("htmlText")) content += data.htmlText;
@@ -818,11 +840,10 @@ package com.riaidea.text
 				var node:XML = data.sprites.sprite[i];
 				var sprite:Object = {};
 				sprite.src = String(node.@src);
-				//correct the index if import as html
 				sprite.index = int(node.@index);
 				sprites.push(sprite);
 			}
-			if(endIndex || beginIndex){
+			if(beginIndex!=-1 && endIndex!=-1){
 				if(data.hasOwnProperty("htmlText")){
 					replaceHtml(beginIndex,endIndex,content,sprites);
 				}else{

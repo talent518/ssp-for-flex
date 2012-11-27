@@ -9,6 +9,7 @@ package com.riaidea.text
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
 	import flash.text.TextLineMetrics;
 	import flash.utils.Dictionary;
@@ -119,6 +120,10 @@ package com.riaidea.text
 				sprite.name = String(index);
 				_spriteIndices[sprite] = true;
 				_numSprites++;
+
+				sprite.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{
+					trace('smileys index:',sprite.name,sprite is ImageRenderer?(sprite as ImageRenderer).source:getQualifiedClassName(sprite));
+				});
 			}
 		}
 		

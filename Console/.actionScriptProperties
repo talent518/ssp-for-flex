@@ -24,7 +24,7 @@
   <flashCatalyst validateFlashCatalystCompatibility="false"/>
   <buildTargets>
     <buildTarget buildTargetName="default">
-      <airSettings airCertificatePath="D:/FenXiHui/signature.p12" airTimestamp="true" anePathSet="true" version="1">
+      <airSettings airCertificatePath="D:/FenXiHui/signature.p12" airTimestamp="false" anePathSet="true" version="1">
         <airExcludes>
           <pathEntry path="assets/DragManager_rejectCursor.png"/>
           <pathEntry path="assets/DividedBox_verticalCursor.png"/>
