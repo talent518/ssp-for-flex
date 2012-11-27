@@ -322,10 +322,11 @@ package com.riaidea.text
 					beginSpriteNum++;
 				}
 			}
-			var endSpriteNum:int=beginSpriteNum+newSprites.length;
+			var newSpritesLength:int=(newSprites?newSprites.length:0);
+			var endSpriteNum:int=beginSpriteNum+newSpritesLength;
 
 			var beginCharIndex:int=beginIndex-1;
-			var endCharIndex:int=beginIndex+rText.length+newSprites.length;
+			var endCharIndex:int=beginIndex+rText.length+newSpritesLength;
 			
 			isNewLineBegin=isNewlineChar(_textRenderer.text,beginCharIndex);
 			isNewLineEnd=isNewlineChar(_textRenderer.text,endCharIndex);
@@ -488,6 +489,8 @@ package com.riaidea.text
 			
 			//insert sprites
 			insertSprites(newSprites, startIndex, startIndex + textLength);
+
+			_textRenderer.setSelection(startIndex+textLength,startIndex+textLength);
 			
 			//if adjusted or have sprites inserted, do render
 			if (adjusted || (newSprites && newSprites.length > 0)) _spriteRenderer.render();
