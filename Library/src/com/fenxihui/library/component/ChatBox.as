@@ -1,6 +1,7 @@
 package com.fenxihui.library.component
 {
 	import com.riaidea.text.RichTextField;
+	import com.riaidea.text.UploadBitmap;
 	
 	import flash.display.DisplayObject;
 	import flash.display.Shader;
@@ -91,6 +92,13 @@ package com.fenxihui.library.component
 			addChild(_scrollBar);
 		}
 		
+		public function get uploadBitmap():UploadBitmap{
+			return _rtf.uploadBitmap;
+		}
+		public function set uploadBitmap(value:UploadBitmap):void{
+			_rtf.uploadBitmap=value;
+		}
+		
 		override protected function focusInHandler(event:FocusEvent):void{
 			super.focusInHandler(event);
 			if(_rtf.type==RichTextField.INPUT){
@@ -101,7 +109,7 @@ package com.fenxihui.library.component
 
 		override protected function updateDisplayList(w:Number,h:Number):void{
 			super.updateDisplayList(w,h);
-			_scrollBar.width=15;
+			_scrollBar.width=14;
 			_scrollBar.x=w-_scrollBar.width;
 			_scrollBar.y=0;
 			_scrollBar.height=h;

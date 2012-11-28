@@ -120,10 +120,6 @@ package com.riaidea.text
 				sprite.name = String(index);
 				_spriteIndices[sprite] = true;
 				_numSprites++;
-
-				sprite.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{
-					trace('smileys index:',sprite.name,sprite is ImageRenderer?(sprite as ImageRenderer).source:getQualifiedClassName(sprite));
-				});
 			}
 		}
 		

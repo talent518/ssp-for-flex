@@ -37,7 +37,6 @@ package com.riaidea.text
 	import mx.controls.SWFLoader;
 	import mx.core.Container;
 	import mx.core.UIComponent;
-	import mx.graphics.codec.JPEGEncoder;
 	
 	
 	/**
@@ -118,6 +117,12 @@ package com.riaidea.text
 		 * RichTextField的版本号。
 		 */
 		public static const version:String = "2.0.2";
+		
+		/**
+		 * RichTextField粘贴位图处理函数
+		 * @param byteArray 为ByteArray类型
+		 */
+		public var uploadBitmap:UploadBitmap;
 		
 		/**
 		 * 构造函数。
@@ -219,6 +224,7 @@ package com.riaidea.text
 				menuItemHandler(e.target.name);
 			});
 			_textRenderer.contextMenu=menu;
+			_spriteRenderer.container.contextMenu=menu;
 		}
 		private function copyToClipboard():void{
 			if(_textRenderer.selectionEndIndex<=_textRenderer.selectionBeginIndex){
@@ -248,23 +254,32 @@ package com.riaidea.text
 					break;
 				case 'parse':
 					var cb:Clipboard=Clipboard.generalClipboard;
+
+					trace('ClipBoardFormat:',cb.formats.join(','));
+
 					if(cb.hasFormat('xml:rtf')){
 						var rtf:XML=cb.getData('xml:rtf') as XML;
 						trace('xml:rtf',rtf.toXMLString());
 						importXML(rtf,_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex);
-					}else if(cb.hasFormat(ClipboardFormats.BITMAP_FORMAT)){
-						var bitmap:BitmapData=cb.getData(ClipboardFormats.BITMAP_FORMAT) as BitmapData;
-						trace(ClipboardFormats.HTML_FORMAT,Base64Encode(new JPEGEncoder(100).encode(bitmap)));
-					}else if(cb.hasFormat(ClipboardFormats.HTML_FORMAT)){
+						break;
+					}
+					if(uploadBitmap!=null && cb.hasFormat(ClipboardFormats.BITMAP_FORMAT)){
+						uploadBitmap.upload(cb.getData(ClipboardFormats.BITMAP_FORMAT) as BitmapData,function(picfile:String):void{
+							insertSprite(picfile,_textRenderer.caretIndex);
+						});
+						break;
+					}
+					if(cb.hasFormat(ClipboardFormats.HTML_FORMAT)){
 						var html:String=cb.getData(ClipboardFormats.HTML_FORMAT) as String;
 						trace(ClipboardFormats.HTML_FORMAT,html);
-						replaceHtml(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,html);
-					}else if(cb.hasFormat(ClipboardFormats.TEXT_FORMAT)){
+						if(replaceHtml(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,html)){
+							break;
+						}
+					}
+					if(cb.hasFormat(ClipboardFormats.TEXT_FORMAT)){
 						var text:String=cb.getData(ClipboardFormats.TEXT_FORMAT) as String;
 						trace(ClipboardFormats.TEXT_FORMAT,text);
 						replaceText(_textRenderer.selectionBeginIndex,_textRenderer.selectionEndIndex,text);
-					}else{
-						trace('ClipBoardFormat:',cb.formats.join(','));
 					}
 					break;
 				case 'delete':
@@ -296,10 +311,13 @@ package com.riaidea.text
 			var code:int=str.charCodeAt(i);
 			return code==13 || code==10;
 		}
-		public function replaceHtml(beginIndex:int,endIndex:int,html:String,newSprites:Array = null):void{
+		public function replaceHtml(beginIndex:int,endIndex:int,html:String,newSprites:Array = null):Boolean{
 			var tf:TextField=new TextField;
 			tf.multiline=true;
 			tf.htmlText=html;
+			if(!tf.htmlText || !tf.text){
+				return false;
+			}
 			var lines:int=0,i:int=0,j:int;
 			while((j=tf.htmlText.indexOf('</P>',i))!=-1){
 				lines++;
@@ -376,6 +394,7 @@ package com.riaidea.text
 			_textRenderer.setSelection(endCharIndex-endSpriteNum,endCharIndex-endSpriteNum);
 			
 			insertSprites(sprites,0,_textRenderer.length-1);
+			return true;
 		}
 		
 		/**
@@ -556,8 +575,8 @@ package com.riaidea.text
 			}catch(e:ReferenceError){
 				var bitmap:ImageRenderer=new ImageRenderer;
 				bitmap.rtf=this;
-				bitmap.source=String(newSprite);
 				bitmap.name=String(index);
+				bitmap.source=String(newSprite);
 				insertSprite(bitmap,index,autoRender,cache);
 				return;
 			}
@@ -581,6 +600,12 @@ package com.riaidea.text
 			_spriteRenderer.adjustSpritesIndex(index, 1);
 			//insert spriteObj to specific index and render it if it's visible
 			_spriteRenderer.insertSprite(spriteObj, index);
+
+			spriteObj.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{
+				var i:int=int((e.target as DisplayObject).name);
+				_textRenderer.setSelection(i,i+1);
+				trace('sprite index:',index,',src:',spriteObj is ImageRenderer?(spriteObj as ImageRenderer).source:getQualifiedClassName(spriteObj));
+			});
 
 			//if autoRender, just do it
 			if (autoRender) _spriteRenderer.render();

@@ -27,6 +27,7 @@
 			import com.fenxihui.desktop.utils.Params;
 			import com.fenxihui.desktop.utils.RemoteProxy;
 			import com.fenxihui.desktop.utils.Smileys;
+			import com.riaidea.text.UploadBitmap;
 			
 			import flash.events.DataEvent;
 			import flash.events.Event;
@@ -134,16 +135,15 @@
 				fonts=new ArrayCollection(Font.enumerateFonts(true));
 				sizes=new ArrayCollection([12,14,16,18,20,22,24,26,28,36,48]);
 				
-				if(rtfInput){
-					rtfInput.defaultTextFormat.size=20;
-					rtfInput.defaultTextFormat.bold=true;
-					rtfInput.defaultTextFormat.color=0xff0000;
-					rtfInput.defaultTextFormat.letterSpacing=1;
-				}
+				rtfInput.defaultTextFormat.size=20;
+				rtfInput.defaultTextFormat.bold=true;
+				rtfInput.defaultTextFormat.color=0xff0000;
+				rtfInput.defaultTextFormat.letterSpacing=1;
 
 				urlRequest = new URLRequest(Params.UPLOAD_URL);
 				urlRequest.method=URLRequestMethod.POST;
 				urlRequest.data='path=consult&uid='+Params.user.uid+'&password='+Params.user.password;
+				rtfInput.uploadBitmap=new UploadBitmap(Params.UPLOAD_URL,urlRequest.method,urlRequest.data as String);
 				fileReference = new FileReference();
 				fileReference.addEventListener(Event.SELECT, function(e:Event):void{
 					trace("文件:"+fileReference.name+"      "+"大小:"+fileReference.size+"字节");
@@ -420,7 +420,7 @@
 			<s:VerticalLayout gap="0"/>
 		</s:layout>
 		<component1:ChatBox id="rtfOutput" width="100%" height="100%" autoScroll="true"/>
-		<mx:HRule id="hRuleResizeInputHeight1" width="100%" strokeColor="#cccccc"/>
+		<mx:HRule id="hRuleResizeInputHeight1" width="100%" height="1" strokeColor="#cccccc"/>
 		<s:HGroup width="100%" height="30" paddingLeft="20" paddingRight="20" verticalAlign="middle">
 			<mx:PopUpButton id="popUpButton_pic" width="50" icon="@Embed('assets/smileys.png')"
 							openAlways="true" toolTip="请选择表情图片">
@@ -478,12 +478,12 @@
 			<s:Label id="lblSendStatus" width="100%" fontSize="14" fontWeight="bold"
 					 textAlign="right" verticalAlign="middle"/>
 		</s:HGroup>
-		<mx:HRule id="hRuleResizeInputHeight2" width="100%" strokeColor="#cccccc"/>
+		<mx:HRule id="hRuleResizeInputHeight2" width="100%" height="1" strokeColor="#cccccc"/>
 		<component1:ChatBox id="rtfInput" width="100%" height="100" autoScroll="true"
 							focusIn="rtfInput_focusInHandler(event)"
 							focusOut="rtfInput_focusOutHandler(event)"
 							keyDown="rtfInput_keyDownHandler(event)" type="input"/>
-		<mx:HRule width="100%" strokeColor="#cccccc"/>
+		<mx:HRule width="100%" height="1" strokeColor="#cccccc"/>
 		<s:HGroup width="100%" height="45" gap="10" paddingLeft="10" paddingRight="10"
 				  verticalAlign="middle">
 			<s:Label left="20" width="100%" height="25" maxDisplayedLines="1"

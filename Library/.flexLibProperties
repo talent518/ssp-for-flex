@@ -10,6 +10,7 @@
     <classEntry path="skins.button.RestoreButtonSkin"/>
     <classEntry path="skins.TitleBarSkin"/>
     <classEntry path="com.fenxihui.library.component.LabelBorder"/>
+    <classEntry path="com.riaidea.text.UploadBitmap"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
