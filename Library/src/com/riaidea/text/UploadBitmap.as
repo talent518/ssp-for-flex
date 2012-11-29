@@ -39,8 +39,14 @@ package com.riaidea.text
 			trace("UploadBitmap completeHandler: " + urlLoader.data);
 			var xml:XML=XML(urlLoader.data);
 			if(xml){
-				callback(xml.text());
-				callback=null;
+				if(parseInt(xml.@status.toString())){
+					callback(xml.text());
+					callback=null;
+				}else{
+					ShowDialog(xml.text(),false);
+				}
+			}else{
+				ShowDialog('上传失败！',false);
 			}
 		}
 		

@@ -9,6 +9,7 @@ package com.fenxihui.desktop.utils
 		public static const SOCKET_DELAY:uint=5;
 		public static const SOCKET_TRY:uint=300;
 		
+		public static const UPDATE_URL:String="http://soft.fenxihui.com/update.xml";
 		public static const UPLOAD_URL:String="http://soft.fenxihui.com/upload.php";
 
 		private static var _instance:Params=new Params;

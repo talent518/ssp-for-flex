@@ -273,7 +273,7 @@
 					ShowDialog('更新成功！',true);
 				}
 				
-				appUpdater.updateURL="http://soft.fenxihui.com/update.xml";
+				appUpdater.updateURL=Params.UPDATE_URL;
 				
 				appUpdater.isCheckForUpdateVisible=false;
 				appUpdater.isDownloadProgressVisible=appUpdater.isDownloadUpdateVisible=true;
