@@ -12,9 +12,6 @@
 		global{
 			fontFamily:'宋体','Courier New';
 		}
-		.ToolTip{
-			fontSize:14px;
-		}
 	</mx:Style>
 	<mx:Script>
 		<![CDATA[
@@ -94,6 +91,7 @@
 			private var soundClass:Class;
 			
 			private var sound:Sound=new soundClass() as Sound;
+			private var mute:Boolean=false;
 			
 			private var _trayToolTip:String,_oldTrayToolTip:String;
 
@@ -140,7 +138,9 @@
 				removeFlickerQueue(type);
 				flickerQueues.push({type:type,icons:getFlickerIconFromBitmap(new iconClass),toolTip:toolTip});
 				flickerTimer.start();
-				sound.play();
+				if(!mute){
+					sound.play();
+				}
 				flickerTimer.dispatchEvent(new TimerEvent(TimerEvent.TIMER));
 			}
 			
@@ -252,6 +252,13 @@
 					case 'logout':
 						User.Logout();
 						break;
+					case 'mute':
+						var _mute:Boolean=e.item.@toggled.toString().toLowerCase()=='true';
+						if(_mute!=mute){
+							mute=_mute;
+							RemoteProxy.send('User.Mute',{mute:mute?1:0});
+						}
+						break;
 					case 'openmain':
 						OpenMainPanel();
 						break;
@@ -352,6 +359,13 @@
 				xml.@label=("注销["+value+"]"+(RemoteProxy.connected?" - 在线":" - 离线"));
 				setIconMenu(true);
 			}
+			public static function setMute(value:Boolean):void{
+				var xml:*=_main.trayIconMenuForLoginAfter.menuitem.(attribute('name')=='mute');
+				//trace('setMute:',xml.toXMLString());
+				xml.@toggled=value;
+				_main.mute=value;
+				setIconMenu(true);
+			}
 			public static function exit():void{
 				System.gc();
 				NativeApplication.nativeApplication.icon.bitmaps = [];
@@ -380,10 +394,11 @@
 	</mx:Script>
 	<mx:XML id="trayIconMenuForLoginAfter" format="e4x">
 		<root>
-			<menuitem label="注销" name="logout" keyEquivalent="l" />
+			<menuitem label="静音" name="mute" type="check" toggled="false" keyEquivalent="m" />
 			<menuitem type="separator"/>
 			<menuitem label="打开主面板" name="openmain" keyEquivalent="o"/>
 			<menuitem type="separator"/>
+			<menuitem label="注销" name="logout" keyEquivalent="l" />
 			<menuitem label="退出" name="exit" keyEquivalent="e"/>
 		</root>
 	</mx:XML>

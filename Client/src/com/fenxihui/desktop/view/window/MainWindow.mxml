@@ -4,7 +4,7 @@
 				  xmlns:mx="library://ns.adobe.com/flex/mx"
 				  xmlns:component="com.fenxihui.library.component.*"
 				  xmlns:component4="com.fenxihui.desktop.view.component.*"
-				  width="650" height="500" backgroundImage="@Embed(source='assets/bg_main.png')"
+				  width="650" height="378" backgroundImage="@Embed(source='assets/bg_main.png')"
 				  creationComplete="initWindow();" dropShadowVisible="true" fontSize="12"
 				  horizontalScrollPolicy="off" layout="vertical" moveObject="{windowMove}"
 				  showFlexChrome="false" showStatusBar="false" showTitleBar="true"
@@ -18,13 +18,14 @@
 			import com.fenxihui.desktop.utils.RemoteProxy;
 			import com.fenxihui.desktop.view.Loading;
 			import com.fenxihui.desktop.view.component.ViewInfo;
-			import com.fenxihui.desktop.view.item.ItemInfo;
 			
 			import flash.net.getClassByAlias;
 			import flash.net.navigateToURL;
 			
+			import mx.controls.ToolTip;
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
+			import mx.events.ToolTipEvent;
 			import mx.formatters.DateFormatter;
 			import mx.utils.ObjectUtil;
 			
@@ -266,13 +267,20 @@
 				RemoteProxy.send('Consult.State',{});
 			}
 			
+			protected function toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+			
 		]]>
 	</fx:Script>
 	<s:Group id="windowMove" width="100%" height="40">
 		<s:Button x="600" y="10" buttonMode="true" click="close()"
-				  skinClass="skins.button.MinimizeButtonSkin" toolTip="最小化到托盘" useHandCursor="true"/>
+				  skinClass="skins.button.MinimizeButtonSkin" toolTip="最小化到托盘" toolTipCreate="toolTipCreateHandler(event)" useHandCursor="true"/>
 		<s:Button x="620" y="10" buttonMode="true" click="Main.exit()"
-				  skinClass="skins.button.CloseButtonSkin" toolTip="退出软件" useHandCursor="true"/>
+				  skinClass="skins.button.CloseButtonSkin" toolTip="退出软件" toolTipCreate="toolTipCreateHandler(event)" useHandCursor="true"/>
 	</s:Group>
 	<s:HGroup width="100%" height="100%" paddingLeft="10" paddingRight="10">
 		<s:BorderContainer width="100%" height="100%" backgroundAlpha="0.5" borderColor="#DDDDDD"
@@ -306,9 +314,6 @@
 									   verticalAlign="middle"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
-				<component4:FunctionButton id="fbOS" width="100%" label="操作系统"
-										   click="fbOS_clickHandler(event)" icon="{Icons.OS}"
-										   toolTip="发布您的股票操作记录，我们会为您的操作提供技术支持，并即时提醒您，我们为您的操作做出的点评"/>
 				<component4:FunctionButton id="fbGold" width="100%" label="优选金股"
 										   click="fbGold_clickHandler(event)" icon="{Icons.Gold}"
 										   toolTip="有新的优选金股会即时提醒您"/>
@@ -317,22 +322,15 @@
 										   icon="{Icons.Invest}" toolTip="有新的投资组合会即时提醒您"/>
 			</s:HGroup>
 			<s:HGroup width="100%" height="80">
+				<component4:FunctionButton id="fbOS" width="100%" label="操作系统"
+										   click="fbOS_clickHandler(event)" icon="{Icons.OS}"
+										   toolTip="发布您的股票操作记录，我们会为您的操作提供技术支持，并即时提醒您，我们为您的操作做出的点评"/>
 				<component4:FunctionButton id="fbBroadcast" width="100%" label="盘中直播"
 										   click="fbBroadcast_clickHandler(event)"
 										   icon="{Icons.Broadcast}"
 										   toolTip="只有在您打开盘中直播窗口时，有新消息才能即时提醒到您"/>
 				<component4:FunctionButton id="fbConsult" width="100%" label="个股会诊" enabled="true"
 										   icon="{Icons.Consult}" click="fbConsult_clickHandler(event)"/>
-				<component4:FunctionButton id="fbNews" width="100%" label="热点新闻" enabled="false"
-										   icon="{Icons.News}"/>
-			</s:HGroup>
-			<s:HGroup width="100%" height="80">
-				<component4:FunctionButton id="fbHot" width="100%" label="热点板块" enabled="false"
-										   icon="{Icons.Hot}"/>
-				<component4:FunctionButton id="fbMustRead" width="100%" label="每日必读" enabled="false"
-										   icon="{Icons.MustRead}"/>
-				<component4:FunctionButton id="fbPool" width="100%" label="股票池" enabled="false"
-										   icon="{Icons.Pool}"/>
 			</s:HGroup>
 		</s:BorderContainer>
 	</s:HGroup>

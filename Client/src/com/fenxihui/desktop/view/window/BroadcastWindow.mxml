@@ -41,8 +41,10 @@
 			import flash.net.URLRequest;
 			
 			import mx.collections.ArrayCollection;
+			import mx.controls.ToolTip;
 			import mx.events.ColorPickerEvent;
 			import mx.events.MenuEvent;
+			import mx.events.ToolTipEvent;
 			import mx.formatters.DateFormatter;
 			import mx.managers.CursorManager;
 			import mx.managers.CursorManagerPriority;
@@ -404,6 +406,13 @@
 				}
 			}
 			
+			protected function toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+			
 		]]>
 	</fx:Script>
 	<s:BorderContainer left="10" width="100%" height="100%" borderColor="#cccccc" borderStyle="solid"
@@ -417,7 +426,7 @@
 		<s:HGroup includeIn="add" width="100%" height="30" paddingLeft="20" paddingRight="20"
 				  verticalAlign="middle">
 			<mx:PopUpButton id="popUpButton_pic" width="50" icon="@Embed('assets/smileys.png')"
-							openAlways="true" toolTip="请选择表情图片">
+							openAlways="true" toolTip="请选择表情图片" toolTipCreate="toolTipCreateHandler(event)">
 				<mx:popUp>
 					<mx:TitleWindow id="titleWindow_popUp" width="400" height="200"
 									close="popUpButton_pic.close();" cornerRadius="5"
@@ -428,14 +437,14 @@
 								<mx:Image buttonMode="true" click="imageclick(event)"
 										  data="{smileys.currentIndex}"
 										  source="{smileys.currentItem.icon}"
-										  toolTip="{smileys.currentItem.toolTip}"/>
+										  toolTip="{smileys.currentItem.toolTip}" toolTipCreate="toolTipCreateHandler(event)"/>
 							</mx:Repeater>
 						</mx:ToolBar>
 					</mx:TitleWindow>
 				</mx:popUp>
 			</mx:PopUpButton>
 			<mx:PopUpButton id="popUpButton_fontSetup" width="50" icon="@Embed('assets/A.png')"
-							openAlways="true" toolTip="设置字体样式">
+							openAlways="true" toolTip="设置字体样式" toolTipCreate="toolTipCreateHandler(event)">
 				<mx:popUp>
 					<mx:TitleWindow id="titleWindow_popUp_fontSetup"
 									close="popUpButton_fontSetup.close();" cornerRadius="5"
@@ -444,25 +453,25 @@
 							<s:ComboBox id="fontsetup_fontFamily" width="100"
 										change="fontsetup_fontFamily_changeHandler(event)"
 										dataProvider="{fonts}" labelField="fontName" paddingLeft="4"
-										paddingRight="4" textAlign="left" toolTip="字体"/>
+										paddingRight="4" textAlign="left" toolTip="字体" toolTipCreate="toolTipCreateHandler(event)"/>
 							<s:ComboBox id="fontsetup_fontSize" width="60"
 										change="fontsetup_fontSize_changeHandler(event)"
 										dataProvider="{sizes}" paddingLeft="4" paddingRight="4"
-										textAlign="left" toolTip="字体"/>
+										textAlign="left" toolTip="字体" toolTipCreate="toolTipCreateHandler(event)"/>
 							<mx:CheckBox id="fontsetup_fontWeight" label=""
 										 change="checkBox_fontsetup(event)" data="fontWeight"
-										 toolTip="粗体"/>
-							<mx:Image source="@Embed('assets/b.png')" toolTip="粗体"/>
+										 toolTip="粗体" toolTipCreate="toolTipCreateHandler(event)"/>
+							<mx:Image source="@Embed('assets/b.png')" toolTip="粗体" toolTipCreate="toolTipCreateHandler(event)"/>
 							<mx:CheckBox id="fontsetup_fontStyle" label=""
 										 change="checkBox_fontsetup(event)" data="fontStyle"
-										 toolTip="倾斜"/>
-							<mx:Image source="@Embed('assets/i.png')" toolTip="倾斜"/>
+										 toolTip="倾斜" toolTipCreate="toolTipCreateHandler(event)"/>
+							<mx:Image source="@Embed('assets/i.png')" toolTip="倾斜" toolTipCreate="toolTipCreateHandler(event)"/>
 							<mx:CheckBox id="fontsetup_textDecoration" label=""
 										 change="checkBox_fontsetup(event)" data="textDecoration"
-										 toolTip="下划线"/>
-							<mx:Image source="@Embed('assets/u.png')" toolTip="下划线"/>
+										 toolTip="下划线" toolTipCreate="toolTipCreateHandler(event)"/>
+							<mx:Image source="@Embed('assets/u.png')" toolTip="下划线" toolTipCreate="toolTipCreateHandler(event)"/>
 							<mx:ColorPicker id="fontsetup_color" change="colorPicker_color(event)"
-											toolTip="颜色"/>
+											toolTip="颜色" toolTipCreate="toolTipCreateHandler(event)"/>
 						</mx:HBox>
 					</mx:TitleWindow>
 				</mx:popUp>

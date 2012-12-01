@@ -273,7 +273,10 @@
 								   sortable="false" textAlign="center"/>
 				<mx:DataGridColumn width="68" headerText="操作"
 								   itemRenderer="com.fenxihui.desktop.view.item.ItemInvestOperition"
-								   sortable="false" textAlign="center"/>
+								   sortable="false" textAlign="center" includeIn="view"/>
+				<mx:DataGridColumn width="196" headerText="操作"
+								   itemRenderer="com.fenxihui.desktop.view.item.ItemInvestEditOperition"
+								   sortable="false" textAlign="center" includeIn="add"/>
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:HBox width="100%" height="25" horizontalAlign="center">

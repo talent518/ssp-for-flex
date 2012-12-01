@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+						  xmlns:s="library://ns.adobe.com/flex/spark"
+						  xmlns:mx="library://ns.adobe.com/flex/mx"
+						  dataChange="dataChangeHandler(event)" focusEnabled="true">
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			import com.fenxihui.desktop.view.window.GoldEditWindow;
+			import com.fenxihui.desktop.view.window.GoldViewWindow;
+			import com.fenxihui.desktop.view.window.MainWindow;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			
+			protected function view(gid:Number):void{
+				btnView.enabled=false;
+				RemoteProxy.bind('Gold.View.Succeed',function(request:XML):void{
+					var viewWindow:GoldViewWindow=new GoldViewWindow;
+					with(viewWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						data=XML(request.gold);
+					}
+					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						btnView.enabled=true;
+					});
+					if(!parseInt(data.@isread.toString())){
+						data.@isread=1;
+						data=data;
+						MainWindow.setFlicker('gold',-1);
+					}
+				});
+				RemoteProxy.bind('Gold.View.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnView.enabled=true;
+					});
+				});
+				RemoteProxy.send('Gold.View',{gid:gid});
+			}
+			
+			protected function edit(gid:Number):void{
+				btnEdit.enabled=false;
+				RemoteProxy.bind('Gold.View.Succeed',function(request:XML):void{
+					var viewWindow:GoldEditWindow=new GoldEditWindow;
+					with(viewWindow){
+						open(true);
+						nativeWindow.activate();
+						nativeWindow.restore();
+						nativeWindow.orderToFront();
+						center();
+						data=XML(request.gold);
+					}
+					viewWindow.gid=gid;
+					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
+						btnEdit.enabled=true;
+					});
+					if(!parseInt(data.@isread.toString())){
+						data.@isread=1;
+						data=data;
+						MainWindow.setFlicker('gold',-1);
+					}
+				});
+				RemoteProxy.bind('Gold.View.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnEdit.enabled=true;
+					});
+				});
+				RemoteProxy.send('Gold.View',{gid:gid});
+			}
+			
+			protected function drop(gid:Number):void{
+				Alert.show('您确定要删除“'+data.@title+'”吗？','删除操作',Alert.YES|Alert.NO,parent as Sprite,function(e:CloseEvent):void{
+					if(e.detail==Alert.YES){
+						btnDrop.enabled=false;
+						RemoteProxy.bind('Gold.Drop.Succeed',function(request:XML):void{
+							ShowDialog(request.text(),false,function():void{
+								btnDrop.label='已删除';
+								btnDrop.setStyle('fontWeight','bold');
+							});
+							if(!parseInt(data.@isread.toString())){
+								data.@isread=1;
+								data=data;
+								MainWindow.setFlicker('os',-1);
+							}
+						});
+						RemoteProxy.bind('Gold.Drop.Failed',function(request:XML):void{
+							ShowDialog(request.text(),false,function():void{
+								btnDrop.enabled=true;
+							});
+						});
+						RemoteProxy.send('Gold.Drop',{gid:gid});
+					}
+				});
+			}
+			
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				if(!data){
+					return;
+				}
+				if(parseInt(data.@isread.toString())){
+					btnView.setStyle('fontWeight','normal');
+				}else{
+					btnView.setStyle('fontWeight','bold');
+				}
+				btnDrop.enabled=true;
+				btnDrop.label='删除';
+				btnDrop.setStyle('fontWeight','normal');
+			}
+		]]>
+	</fx:Script>
+	<mx:HBox width="100%" horizontalAlign="center" horizontalGap="4">
+		<mx:Button id="btnView" width="60" label="查看" buttonMode="true"
+				   click="view(parseInt(data.@gid.toString()))" useHandCursor="true"/>
+		<mx:Button id="btnEdit" width="60" label="编辑" buttonMode="true"
+				   click="edit(parseInt(data.@gid.toString()))" useHandCursor="true"/>
+		<mx:Button id="btnDrop" width="60" label="删除" buttonMode="true"
+				   click="drop(parseInt(data.@gid.toString()))" useHandCursor="true"/>
+	</mx:HBox>
+</s:MXDataGridItemRenderer>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.fenxihui.desktop.model.User;
+			import com.fenxihui.desktop.utils.RemoteProxy;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.ToolTip;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ToolTipEvent;
+			
+			public var iid:uint=0;
+
+			private var ids:Array=[];
+			
+			private var stocks:Array=[];
+
+			public function get isids():Array
+			{
+				return ids;
+			}
+
+			[Bindable]
+			private var dataStock:Object;
+			
+			private var _dataProvider:XMLList;
+			
+			public function get dataProvider():XMLList
+			{
+				return _dataProvider;
+			}
+			
+			public function set dataProvider(list:XMLList):void{
+				_dataProvider=list;
+				
+				var item:XML,arr:Array=[],stock:Object;
+				for each(item in list){
+					stock={};
+					stock.isid=uint(item.@isid.toString());
+					stock.code=item.@code.toString();
+					stock.name=item.@name.toString();
+					stock.reason=item.@reason.toString();
+					stock.think=item.@think.toString();
+					arr.push(stock);
+					ids.push(stock.isid);
+				}
+				stocks=arr.sortOn('isid',Array.NUMERIC);
+				stockList.dataProvider=new ArrayCollection(stocks);
+			}
+
+			private function setStock(value:Object,isDelete:Boolean=false):void{
+				var i:int,isAdd:Boolean=!isDelete;
+				for(i=0;i<stocks.length;i++){
+					if(stocks[i].isid==value.isid){
+						if(isDelete){
+							stocks=stocks.splice(i,1);
+							ids=ids.splice(ids.indexOf(int(value.isid)),1);
+						}else{
+							stocks[i]=value;
+							isAdd=false;
+						}
+						break;
+					}
+				}
+				if(isAdd){
+					ids.push(value.isid);
+					stocks.push(value);
+				}
+				stockList.dataProvider=new ArrayCollection(stocks);
+			}
+
+			private function getParams():Object{
+				var params:Object={};
+				
+				params.code=iptCode.text;
+				params.name=iptName.text;
+				params.reason=iptReason.text;
+				params.think=iptThink.text;
+
+				return params;
+			}
+
+			protected function btnAddStock_clickHandler(event:MouseEvent):void
+			{
+				var params:Object=getParams();
+
+				params.iid=iid;
+
+				RemoteProxy.bind('Invest.AddStock.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						params.isid=uint(request.@isid.toString());
+						ids.push(params.isid);
+						setStock(params);
+						dataStock={};
+						btnAddStock.enabled=true;
+					});
+				});
+				RemoteProxy.bind('Invest.AddStock.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnAddStock.enabled=true;
+					});
+				});
+				btnAddStock.enabled=false;
+				RemoteProxy.send('Invest.AddStock',params);
+			}
+			
+			protected function btnEditStock_clickHandler(event:MouseEvent):void
+			{
+				var params:Object=getParams();
+				params.isid=dataStock.isid;
+				
+				RemoteProxy.bind('Invest.EditStock.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						setStock(params);
+						dataStock={};
+						btnAddStock.includeInLayout=true;
+						btnEditStock.enabled=true;
+						btnEditStock.includeInLayout=false;
+						btnDropStock.includeInLayout=false;
+						btnCancelEdit.includeInLayout=false;
+					});
+				});
+				RemoteProxy.bind('Invest.EditStock.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnAddStock.includeInLayout=true;
+						btnEditStock.enabled=true;
+						btnEditStock.includeInLayout=false;
+						btnDropStock.includeInLayout=false;
+						btnCancelEdit.includeInLayout=false;
+					});
+				});
+				btnAddStock.enabled=false;
+				RemoteProxy.send('Invest.EditStock',params);
+			}
+			
+			protected function btnDropStock_clickHandler(event:MouseEvent):void
+			{
+				var params:Object={};
+				params.isid=dataStock.isid;
+				
+				RemoteProxy.bind('Invest.DropStock.Succeed',function(request:XML):void{
+					ShowDialog(request.text(),true,function():void{
+						setStock(params,true);
+						dataStock={};
+						btnAddStock.includeInLayout=true;
+						btnEditStock.includeInLayout=false;
+						btnDropStock.enabled=true;
+						btnDropStock.includeInLayout=false;
+						btnCancelEdit.includeInLayout=false;
+					});
+				});
+				RemoteProxy.bind('Invest.DropStock.Failed',function(request:XML):void{
+					ShowDialog(request.text(),false,function():void{
+						btnDropStock.enabled=true;
+					});
+				});
+				btnAddStock.enabled=false;
+				RemoteProxy.send('Invest.DropStock',params);
+			}
+			
+			protected function btnCancelEdit_clickHandler(event:MouseEvent):void
+			{
+				dataStock={};
+
+				btnAddStock.includeInLayout=true;
+				btnEditStock.includeInLayout=false;
+				btnDropStock.includeInLayout=false;
+				btnCancelEdit.includeInLayout=false;
+			}
+			
+			protected function stockList_itemDoubleClickHandler(event:ListEvent):void
+			{
+				dataStock=stockList.selectedItem;
+				btnAddStock.includeInLayout=false;
+				btnEditStock.includeInLayout=true;
+				btnDropStock.includeInLayout=stocks.length>0;
+				btnCancelEdit.includeInLayout=true;
+			}
+			
+			protected function stockList_toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+			
+		]]>
+	</fx:Script>
+	<mx:DataGrid id="stockList" width="100%" height="100%" editable="false" fontSize="12"
+				 resizableColumns="true" doubleClickEnabled="true" itemDoubleClick="stockList_itemDoubleClickHandler(event)"
+				 toolTip="双击行进入编辑状态" toolTipCreate="stockList_toolTipCreateHandler(event)">
+		<mx:columns>
+			<mx:DataGridColumn dataField="isid" headerText="股票ID" sortable="false" textAlign="center" width="60"/>
+			<mx:DataGridColumn dataField="code" headerText="股票代码" sortable="false" textAlign="center" width="60"/>
+			<mx:DataGridColumn dataField="name" headerText="股票名称" sortable="false" textAlign="left" width="100"/>
+			<mx:DataGridColumn dataField="reason" headerText="选入理由" sortable="false" textAlign="left"/>
+			<mx:DataGridColumn dataField="think" headerText="操作思路" sortable="false" textAlign="left"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:HRule width="100%" chromeColor="#000000"/>
+	<s:HGroup width="100%" height="30">
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="股票代码：" textAlign="right" verticalAlign="middle"/>
+			<s:TextInput id="iptCode" width="80" height="100%" maxChars="6" prompt="000000"
+						 restrict="0-9" widthInChars="6" text="{dataStock.code}"/>
+		</s:HGroup>
+		<s:HGroup width="50%" height="30">
+			<s:Label width="60" height="100%" text="股票名称：" textAlign="right" verticalAlign="middle"/>
+			<mx:TextInput id="iptName" width="100%" height="100%" text="{dataStock.name}"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:HRule width="100%" chromeColor="#000000"/>
+	<s:HGroup width="100%">
+		<s:Label width="60" height="100%" lineHeight="30" paddingBottom="5" paddingTop="5"
+				 text="选入理由：" textAlign="right" verticalAlign="top"/>
+		<s:TextArea id="iptReason" width="100%" height="75" lineHeight="25" text="{dataStock.reason}"/>
+	</s:HGroup>
+	<s:HGroup width="100%">
+		<s:Label width="60" height="100%" lineHeight="30" paddingBottom="5" paddingTop="5" text="操作思路："
+				 textAlign="right" verticalAlign="top"/>
+		<s:TextArea id="iptThink" width="100%" height="75" lineHeight="25" text="{dataStock.think}"/>
+	</s:HGroup>
+	<s:HGroup width="100%">
+	</s:HGroup>
+	<s:HGroup width="100%">
+	</s:HGroup>
+	<s:HGroup width="100%" height="30" horizontalAlign="center" textAlign="left">
+		<mx:Button id="btnAddStock" height="100%" label="添加股票" click="btnAddStock_clickHandler(event)" enabled="{btnAddStock.includeInLayout}"/>
+		<mx:Button id="btnEditStock" height="100%" label="编辑股票" click="btnEditStock_clickHandler(event)" enabled="{btnEditStock.includeInLayout}" includeInLayout="false"/>
+		<mx:Button id="btnDropStock" height="100%" label="删除股票" click="btnDropStock_clickHandler(event)" enabled="{btnDropStock.includeInLayout}" includeInLayout="false"/>
+		<mx:Button id="btnCancelEdit" height="100%" label="取消编辑" click="btnCancelEdit_clickHandler(event)" enabled="{btnCancelEdit.includeInLayout}" includeInLayout="false"/>
+	</s:HGroup>
+</s:VGroup>

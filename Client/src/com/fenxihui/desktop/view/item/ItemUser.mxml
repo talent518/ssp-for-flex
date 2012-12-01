@@ -3,19 +3,21 @@
 					  xmlns:s="library://ns.adobe.com/flex/spark"
 					  xmlns:mx="library://ns.adobe.com/flex/mx"
 					  xmlns:component="com.fenxihui.library.component.*"
-					  width="100%" dataChange="mxtreeitemrenderer1_dataChangeHandler(event)" xmlns:component1="com.fenxihui.library.component.*">
+					  width="100%" dataChange="dataChangeHandler(event)" xmlns:component1="com.fenxihui.library.component.*">
 	<fx:Script>
 		<![CDATA[
 			import mx.collections.*;
+			import mx.controls.ToolTip;
 			import mx.controls.treeClasses.*;
 			import mx.events.FlexEvent;
+			import mx.events.ToolTipEvent;
 			
 			protected function imgAvatar_clickHandler(event:MouseEvent):void
 			{
 				trace('Open user "'+data.@nickname+'" info window!');
 			}
 			
-			protected function mxtreeitemrenderer1_dataChangeHandler(event:FlexEvent):void
+			protected function dataChangeHandler(event:FlexEvent):void
 			{
 				if(treeListData.hasChildren){
 					lblGroupLabel.text=data.@name;
@@ -40,6 +42,14 @@
 					}
 				}
 			}
+			
+			protected function toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
@@ -51,21 +61,21 @@
 		<s:VGroup width="100%" height="100%">
 			<s:HGroup width="100%" height="20">
 				<s:Label id="lblNickname" width="100%" height="100%" verticalAlign="middle"
-						 maxDisplayedLines="1" showTruncationTip="true"/>
+						 maxDisplayedLines="1" showTruncationTip="true" toolTipCreate="toolTipCreateHandler(event)"/>
 				<component:LabelBorder id="lblUnread" height="100%" backgroundAlpha="1.0"
 									   backgroundColor="#cccccc" borderVisible="false"
 									   color="#b60003" cornerRadius="5" fontFamily="Georgia"
 									   fontSize="14" fontWeight="bold" paddingLeft="5"
-									   paddingRight="5" textAlign="center" verticalAlign="middle"/>
+									   paddingRight="5" textAlign="center" verticalAlign="middle" toolTipCreate="toolTipCreateHandler(event)"/>
 			</s:HGroup>
 			<s:Label id="lblSignature" width="100%" height="20" verticalAlign="middle"
-					 maxDisplayedLines="1" showTruncationTip="true"/>
+					 maxDisplayedLines="1" showTruncationTip="true" toolTipCreate="toolTipCreateHandler(event)"/>
 		</s:VGroup>
 	</s:HGroup>
 	<s:HGroup id="disclosureGroup" width="100%" height="20"
 			  includeInLayout="{treeListData.hasChildren}" verticalAlign="middle" visible="{treeListData.hasChildren}">
 		<s:BitmapImage source="{treeListData.icon}"/>
-		<s:Label id="lblGroupLabel"/>
+		<s:Label id="lblGroupLabel" toolTipCreate="toolTipCreateHandler(event)"/>
 		<s:Label id="lblGroupCount"/>
 	</s:HGroup>
 </s:MXTreeItemRenderer>

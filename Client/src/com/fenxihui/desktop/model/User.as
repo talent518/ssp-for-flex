@@ -89,6 +89,7 @@ package com.fenxihui.desktop.model
 
 			var setting:Object=Params.setting;
 			setting.servday=request.user.setting.@servday.toString();
+			Main.setMute(Boolean(uint(request.user.setting.@mute.toString())));
 
 			var profile:Object=Params.profile;
 			profile.nickname=request.user.profile.@nickname.toString();

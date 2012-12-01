@@ -3,11 +3,11 @@
 				  xmlns:s="library://ns.adobe.com/flex/spark"
 				  xmlns:mx="library://ns.adobe.com/flex/mx"
 				  xmlns:component="com.fenxihui.library.component.*"
-				  xmlns:component2="com.fenxihui.desktop.view.component.*"
-				  width="600" height="484" creationComplete="initWindow(event)"
+				  xmlns:window="com.fenxihui.desktop.view.window.*"
+				  width="600" height="484"
 				  layout="vertical" maxButtonVisible="false"
 				  paddingBottom="20" paddingLeft="20" paddingRight="20" paddingTop="20"
-				  resizable="false" title="发布投资组合">
+				  resizable="false" title="编辑投资组合" xmlns:component1="com.fenxihui.desktop.view.component.*">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
@@ -18,61 +18,41 @@
 			
 			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
-			private static var _investAddWindow:InvestAddWindow;
-			public static function get investAddWindow():InvestAddWindow{
-				if(!_investAddWindow){
-					_investAddWindow=new InvestAddWindow;
-				}
-				return _investAddWindow;
-			}
 			
-			public static function remove():void{
-				if(!_investAddWindow)
-					return;
-				_investAddWindow.nativeWindow.close();
-				_investAddWindow.removeAllChildren();
-				_investAddWindow.removeAllElements();
-				_investAddWindow=null;
-			}
+			public var iid:uint=0;
+
+			[Bindable]
+			public var stockList:XMLList;
+			
 			protected function btnSave_clickHandler(event:MouseEvent):void
 			{
 				var params:Object={};
 				
+				params.iid=iid;
 				params.title=iptTitle.text;
 				params.isids=isStock.isids.join(',');
 				
-				RemoteProxy.bind('Invest.Add.Succeed',function(request:XML):void{
+				RemoteProxy.bind('Invest.Edit.Succeed',function(request:XML):void{
 					ShowDialog(request.text(),true,function():void{
-						remove();
+						close();
 					});
 				});
-				RemoteProxy.bind('Invest.Add.Failed',function(request:XML):void{
+				RemoteProxy.bind('Invest.Edit.Failed',function(request:XML):void{
 					ShowDialog(request.text(),false,function():void{
 						btnSave.enabled=true;
 					});
 				});
 				btnSave.enabled=false;
-				RemoteProxy.send('Invest.Add',params);
-			}
-
-			protected function initWindow(event:FlexEvent):void
-			{
-				addEventListener(Event.CLOSE,function(e:Event):void{
-					remove();
-				});
-				RemoteProxy.bind('Invest.Restore',function(request:XML):void{
-					isStock.dataProvider=XMLList(request.stock);
-				});
-				RemoteProxy.send('Invest.Restore',{});
+				RemoteProxy.send('Invest.Edit',params);
 			}
 		]]>
 	</fx:Script>
 	<s:HGroup width="100%" height="30">
 		<s:Label width="60" height="100%" text="组合标题：" textAlign="right" verticalAlign="middle"/>
-		<mx:TextInput id="iptTitle" width="100%" height="100%"/>
+		<mx:TextInput id="iptTitle" width="100%" height="100%" text="{data.@title}"/>
 		<mx:Button id="btnSave" height="100%" label="保存组合" click="btnSave_clickHandler(event)"/>
 	</s:HGroup>
 	<mx:HRule width="100%" chromeColor="#000000"/>
-	<component2:InvestStock id="isStock" width="100%" height="100%">
-	</component2:InvestStock>
+	<component1:InvestStock id="isStock" width="100%" height="100%" dataProvider="{stockList}">
+	</component1:InvestStock>
 </component:Window>
