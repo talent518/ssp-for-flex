@@ -1,12 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009" 
-				  xmlns:s="library://ns.adobe.com/flex/spark" 
-				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:component="com.fenxihui.library.component.*" layout="absolute" width="400" height="300">
+<component:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+				  xmlns:s="library://ns.adobe.com/flex/spark"
+				  xmlns:mx="library://ns.adobe.com/flex/mx"
+				  xmlns:component="com.fenxihui.library.component.*"
+				  xmlns:component1="com.fenxihui.library.component.*"
+				  width="644" height="512" layout="vertical" paddingBottom="10" paddingLeft="10"
+				  paddingRight="10" paddingTop="10" title="查看用户“{data.@username}”">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
+			import mx.controls.ToolTip;
+			import mx.events.FlexEvent;
+			import mx.events.ToolTipEvent;
+			[Bindable]
+			public var profile:XML;
+
+			[Bindable]
+			public var serv:XML;
+			
+			protected function toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+			
 		]]>
 	</fx:Script>
+	<s:HGroup width="100%">
+		<component:ImageBorder id="imgAvatar" width="100" height="100" buttonMode="true"
+							   cornerRadius="10" source="{data.@midavatar}" useHandCursor="true"/>
+		<s:VGroup width="100%" height="100%" fontSize="14" horizontalAlign="center">
+			<s:Label width="100%" height="100%" fontWeight="bold" text="{data.@username}"
+					 verticalAlign="middle"/>
+			<s:Label width="100%" height="100%" text="{data.@email}" verticalAlign="middle"/>
+			<s:Label width="100%" height="100%" text="所属用户组：{data.@group}" verticalAlign="middle"/>
+		</s:VGroup>
+	</s:HGroup>
+	<s:Panel width="100%" backgroundAlpha="0.0" borderColor="#999999" dropShadowVisible="false"
+			 fontSize="14" title="用户登录信息">
+		<s:layout>
+			<s:HorizontalLayout paddingBottom="5" paddingLeft="10" paddingRight="10" paddingTop="5"/>
+		</s:layout>
+		<s:VGroup width="100%" height="100%">
+			<s:Label width="100%" height="25" text="注册时间：{data.@regtime}" verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="注册IP：{data.@regip}" verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="在线状态：{data.@online}" verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="在线时间：{data.@onlinetime}" verticalAlign="middle"/>
+		</s:VGroup>
+		<s:VGroup width="100%" height="100%">
+			<s:Label width="100%" height="25" text="最后登录时间：{data.@prevlogtime}"
+					 verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="前次登录时间：{data.@logtime}" verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="在线状态：{data.@online}" verticalAlign="middle"/>
+			<s:Label width="100%" height="25" text="在线时间：{data.@onlinetime}" verticalAlign="middle"/>
+		</s:VGroup>
+	</s:Panel>
+	<s:Panel width="100%" backgroundAlpha="0.0" borderColor="#999999" dropShadowVisible="false"
+			 fontSize="14" title="客户资料">
+		<s:layout>
+			<s:VerticalLayout paddingBottom="5" paddingLeft="10" paddingRight="10" paddingTop="5"/>
+		</s:layout>
+		<s:HGroup width="100%" height="30">
+			<s:Label height="100%" fontSize="14" fontWeight="normal" paddingTop="8" text="会员服务剩余："
+					 textAlign="right" verticalAlign="top"/>
+			<s:Label id="iptRemark0" width="100%" height="100%" text="{serv.@servday}"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30">
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="姓名："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptNickname" width="100%" height="100%" text="{serv.@nickname}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="电话："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptPhone" width="100%" height="100%" text="{serv.@phone}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30">
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="邮箱："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptEmailServ" width="100%" height="100%" text="{serv.@email}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="QQ："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptQQ" width="100%" height="100%" text="{serv.@qq}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30">
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="资金量："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptFunds" width="100%" height="100%" text="{serv.@funds}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%">
+				<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" text="地址："
+						 textAlign="right" verticalAlign="middle"/>
+				<s:Label id="iptAddress" width="100%" height="100%" text="{serv.@address}"
+						 verticalAlign="middle"/>
+			</s:HGroup>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30">
+			<s:Label width="80" height="100%" fontSize="14" fontWeight="normal" paddingTop="8"
+					 text="备注：" textAlign="right" verticalAlign="top"/>
+			<s:Label id="iptRemark" width="100%" height="100%" text="{serv.@remark}"
+					 toolTip="{serv.@remark}" toolTipCreate="toolTipCreateHandler(event)"
+					 verticalAlign="middle"/>
+		</s:HGroup>
+	</s:Panel>
+
 </component:Window>

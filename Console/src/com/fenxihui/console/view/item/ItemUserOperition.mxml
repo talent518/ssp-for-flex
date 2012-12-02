@@ -2,7 +2,7 @@
 <s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
 						  xmlns:s="library://ns.adobe.com/flex/spark"
 						  xmlns:mx="library://ns.adobe.com/flex/mx"
-						  focusEnabled="true">
+						  focusEnabled="true" dataChange="dataChangeHandler(event)">
 	<fx:Script>
 		<![CDATA[
 			import com.fenxihui.console.utils.RemoteProxy;
@@ -10,6 +10,8 @@
 			import com.fenxihui.console.view.window.UserEditWindow;
 			import com.fenxihui.console.view.window.UserViewWindow;
 			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
 			import mx.events.FlexEvent;
 			
 			protected function view(id:Number):void{
@@ -23,6 +25,8 @@
 						nativeWindow.orderToFront();
 						center();
 						data=XML(request.user);
+						profile=XML(request.profile);
+						serv=XML(request.serv);
 					}
 					viewWindow.addEventListener(Event.CLOSE,function(e:Event):void{
 						btnView.enabled=true;
@@ -63,15 +67,39 @@
 				RemoteProxy.send('Console.User.Edit',{uid:id});
 			}
 			protected function drop(id:Number):void{
+				Alert.show('您确定要删除用户为“'+data.@username+'”的所有数据吗？切记是“所有”！','删除操作',Alert.YES|Alert.NO,parent as Sprite,function(e:CloseEvent):void{
+					if(e.detail==Alert.YES){
+						btnDrop.enabled=false;
+						RemoteProxy.bind('Console.User.Drop.Succeed',function(request:XML):void{
+							ShowDialog(request.text(),true,function():void{
+								btnDrop.label='已删除';
+								btnDrop.setStyle('fontWeight','bold');
+							});
+						});
+						RemoteProxy.bind('Console.User.Drop.Failed',function(request:XML):void{
+							ShowDialog(request.text(),false,function():void{
+								btnDrop.enabled=true;
+							});
+						});
+						RemoteProxy.send('Console.User.Drop',{uid:id});
+					}
+				});
+			}
+			
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				btnDrop.enabled=true;
+				btnDrop.label='删除';
+				btnDrop.setStyle('fontWeight','normal');
 			}
 		]]>
 	</fx:Script>
-	<mx:HBox width="100%" horizontalAlign="center">
+	<mx:HBox width="100%" horizontalAlign="center" horizontalGap="4">
 		<mx:Button id="btnView" width="45" label="查看" buttonMode="true"
 				   click="view(parseInt(data.@uid.toString()))" useHandCursor="true"/>
 		<mx:Button id="btnEdit" width="45" label="编辑" buttonMode="true"
 				   click="edit(parseInt(data.@uid.toString()))" useHandCursor="true"/>
-		<mx:Button id="btnDrop" width="45" label="删除" buttonMode="true"
+		<mx:Button id="btnDrop" width="60" label="删除" buttonMode="true"
 				   click="drop(parseInt(data.@uid.toString()))" useHandCursor="true"/>
 	</mx:HBox>
 </s:MXDataGridItemRenderer>

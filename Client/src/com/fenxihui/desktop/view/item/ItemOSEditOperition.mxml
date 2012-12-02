@@ -81,7 +81,7 @@
 					if(e.detail==Alert.YES){
 						btnDrop.enabled=false;
 						RemoteProxy.bind('Stock.Drop.Succeed',function(request:XML):void{
-							ShowDialog(request.text(),false,function():void{
+							ShowDialog(request.text(),true,function():void{
 								btnDrop.label='已删除';
 								btnDrop.setStyle('fontWeight','bold');
 							});

@@ -2,13 +2,17 @@
 <s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
 						  xmlns:s="library://ns.adobe.com/flex/spark"
 						  xmlns:mx="library://ns.adobe.com/flex/mx"
-						  focusEnabled="true">
+						  focusEnabled="true" dataChange="dataChangeHandler(event)">
 	<fx:Script>
 		<![CDATA[
 			import com.fenxihui.console.utils.RemoteProxy;
 			import com.fenxihui.console.view.window.MainWindow;
 			import com.fenxihui.console.view.window.UserGroupEditWindow;
 			import com.fenxihui.console.view.window.UserGroupWindow;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
 
 			protected function edit(id:Number):void{
 				btnEdit.enabled=false;
@@ -35,19 +39,29 @@
 				RemoteProxy.send('Console.UserGroup.Edit',{gid:id});
 			}
 			protected function drop(id:Number):void{
-				btnDrop.enabled=false;
-				RemoteProxy.bind('Console.UserGroup.Drop.Succeed',function(request:XML):void{
-					ShowDialog(request.text(),true,function():void{
-						btnDrop.enabled=true;
-						UserGroupWindow.userGroupWindow.refresh_list();
-					});
+				Alert.show('您确定要删除用户组为“'+data.@title+'”及其相关用户的所有数据吗？切记是“所有”！','删除操作',Alert.YES|Alert.NO,parent as Sprite,function(e:CloseEvent):void{
+					if(e.detail==Alert.YES){
+						btnDrop.enabled=false;
+						RemoteProxy.bind('Console.UserGroup.Drop.Succeed',function(request:XML):void{
+							ShowDialog(request.text(),true,function():void{
+								btnDrop.label='已删除';
+								btnDrop.setStyle('fontWeight','bold');
+							});
+						});
+						RemoteProxy.bind('Console.UserGroup.Drop.Failed',function(request:XML):void{
+							ShowDialog(request.text(),false,function():void{
+								btnDrop.enabled=true;
+							});
+						});
+						RemoteProxy.send('Console.UserGroup.Drop',{gid:id});
+					}
 				});
-				RemoteProxy.bind('Console.UserGroup.Drop.Failed',function(request:XML):void{
-					ShowDialog(request.text(),false,function():void{
-						btnDrop.enabled=true;
-					});
-				});
-				RemoteProxy.send('Console.UserGroup.Drop',{gid:id});
+			}
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				btnDrop.enabled=true;
+				btnDrop.label='删除';
+				btnDrop.setStyle('fontWeight','normal');
 			}
 		]]>
 	</fx:Script>

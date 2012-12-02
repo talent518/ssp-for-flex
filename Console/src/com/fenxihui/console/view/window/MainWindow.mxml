@@ -16,8 +16,6 @@
 			import com.fenxihui.console.utils.RemoteProxy;
 			import com.fenxihui.console.view.Loading;
 			import com.fenxihui.console.view.component.FunctionButton;
-			import com.fenxihui.console.view.component.ViewInfo;
-			import com.fenxihui.console.view.item.ItemInfo;
 			
 			import flash.net.getClassByAlias;
 			import flash.net.navigateToURL;

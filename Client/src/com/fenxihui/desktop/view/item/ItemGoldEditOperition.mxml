@@ -78,7 +78,7 @@
 					if(e.detail==Alert.YES){
 						btnDrop.enabled=false;
 						RemoteProxy.bind('Gold.Drop.Succeed',function(request:XML):void{
-							ShowDialog(request.text(),false,function():void{
+							ShowDialog(request.text(),true,function():void{
 								btnDrop.label='已删除';
 								btnDrop.setStyle('fontWeight','bold');
 							});
