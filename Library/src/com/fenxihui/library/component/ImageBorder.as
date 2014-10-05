@@ -39,6 +39,16 @@ package com.fenxihui.library.component
 			addEventListener(IOErrorEvent.IO_ERROR,errorHandler);
 		}
 		
+		override public function set source(value:Object):void{
+			if(super.source==value)
+				return;
+			if(value){
+				super.source=value;
+			}else{
+				super.source=defImage;
+			}
+		}
+		
 		protected function errorHandler(e:*):void{
 			if(tryTimes<3){
 				tryTimes++;

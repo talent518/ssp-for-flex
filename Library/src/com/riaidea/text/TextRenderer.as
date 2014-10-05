@@ -136,6 +136,7 @@ package com.riaidea.text
 		{
 			this.htmlText='';
 			this.text='';
+			setTextFormat(defaultTextFormat);
 			_oldLength = 0;
 			_scrollHeight = 0;
 		}

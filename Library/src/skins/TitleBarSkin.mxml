@@ -14,16 +14,32 @@
 		<s:State name="normalAndMaximized" stateGroups="maximizedGroup"/>
 		<s:State name="disabledAndMaximized" stateGroups="maximizedGroup"/>
 	</s:states>
+	<fx:Script>
+		<![CDATA[
+			public function get title():String{
+				return titleText.text;
+			}
+			public function set title(value:String):void{
+				titleText.text=value;
+			}
+			public function get titleIcon():Object{
+				return titleIconImage.source;
+			}
+			public function set titleIcon(value:Object):void{
+				titleIconImage.source=value;
+			}
+		]]>
+	</fx:Script>
 	
 	<s:Rect id="background" left="0" right="0" top="0" bottom="0" radiusX="2" radiusY="2">
 		<s:fill>
 			<s:LinearGradient id="bgFill" rotation="90">
-				<s:GradientEntry color="#b60003"/>
-				<s:GradientEntry color="#960003"/>
+				<s:GradientEntry color="#e9e9e9"/>
+				<s:GradientEntry color="#e4e4e4"/>
 			</s:LinearGradient>
 		</s:fill>
 	</s:Rect>
-	<s:Group left="5" right="5" width="100%" height="100%" minHeight="24">
+	<s:Group left="5" right="5" width="100%" height="100%">
 		<s:layout>
 			<s:HorizontalLayout gap="0" verticalAlign="middle"/>
 		</s:layout>

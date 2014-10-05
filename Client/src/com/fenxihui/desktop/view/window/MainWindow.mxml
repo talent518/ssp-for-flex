@@ -264,13 +264,6 @@
 				RemoteProxy.send('Consult.State',{});
 			}
 			
-			protected function toolTipCreateHandler(event:ToolTipEvent):void
-			{
-				var tip:ToolTip=new ToolTip;
-				tip.setStyle('fontSize',14);
-				event.toolTip=tip;
-			}
-			
 		]]>
 	</fx:Script>
 	<s:Group id="windowMove" width="100%" height="40">

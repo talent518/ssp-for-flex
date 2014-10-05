@@ -3,17 +3,28 @@
 				  xmlns:s="library://ns.adobe.com/flex/spark"
 				  xmlns:mx="library://ns.adobe.com/flex/mx"
 				  xmlns:component="com.fenxihui.library.component.*"
-				  width="516" height="412" creationComplete="creationCompleteHandler(event)"
-				  layout="vertical" maxButtonVisible="false" paddingBottom="10" paddingLeft="10"
-				  paddingRight="10" paddingTop="10" title="服务信息">
+				  width="600" height="600" minWidth="600" minHeight="520" creationComplete="creationCompleteHandler(event)"
+				  layout="vertical" paddingBottom="10" paddingLeft="10" paddingRight="10"
+				  paddingTop="10" title="服务器信息">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:DateFormatter id="dateFormatter" formatString="JJ:NN:SS"/>
+		
+		<mx:SolidColorStroke id="s1" color="#FF0000" weight="0.3"/>
+		<mx:SolidColorStroke id="s2" color="#00FF00" weight="0.3"/>
+		<mx:SolidColorStroke id="s3" color="#0000FF" weight="0.3"/>
+		<mx:SolidColorStroke id="s4" color="#FF9900" weight="0.3"/>
+		<mx:SolidColorStroke id="s5" color="#00FFFF" weight="0.3"/>
+		<mx:SolidColorStroke id="s6" color="#FF00FF" weight="0.3"/>
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
 			import com.fenxihui.console.utils.RemoteProxy;
 			
+			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
 			private static var _serverWindow:ServiceWindow;
 			public static function get serverWindow():ServiceWindow{
 				if(!_serverWindow){
@@ -30,19 +41,63 @@
 				_serverWindow.removeAllElements();
 				_serverWindow=null;
 			}
-			private var timer:Timer=new Timer(10000);
+			
+			private static const MAX_COUNT:int = 100;
+			
+			[Bindable]
+			private var ac:ArrayCollection;
+			[Bindable]
+			private var acMem:ArrayCollection;
+			
+			private var timer:Timer=new Timer(3000);
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
+				var index:int=0;
+				
+				ac = new ArrayCollection();
+				acMem = new ArrayCollection();
+				for (var i:int = 0; i < MAX_COUNT; i++) 
+				{
+					ac.addItem(new ObjectProxy({}));
+					acMem.addItem(new ObjectProxy({}));
+				}
+				
 				addEventListener(Event.CLOSE,function(e:Event):void{
 					timer.reset();
 					remove();
 				});
 				RemoteProxy.bind('Console.Service.Info.Succeed',function(request:XML):void{
 					data=request;
+					
+					var item:Object=new Object(),itemMem:Object=new Object();
+					item.sysCPUus=Number(request.sysinfo.us.toString()).toFixed(3);
+					item.sysCPUsy=Number(request.sysinfo.sy.toString()).toFixed(3);
+					item.sysCPUni=Number(request.sysinfo.ni.toString()).toFixed(3);
+					item.sysCPUid=Number(request.sysinfo.id.toString()).toFixed(3);
+					item.procCPU=Number(request.procinfo.pcpu.toString()).toFixed(3);
+					
+					itemMem.rss=Number(Number(request.procinfo.rss.toString())/1024/1024).toFixed(3);
+					
+					item.time=itemMem.time=dateFormatter.format(new Date());
+					item.index=itemMem.index=index;
+					index=(index+1) % MAX_COUNT;
+					
+					if(ac.length < MAX_COUNT)
+					{
+						ac.addItem(new ObjectProxy(item));
+						acMem.addItem(new ObjectProxy(itemMem));
+					}
+					else
+					{
+						ac.removeItemAt(0);
+						ac.addItem(new ObjectProxy(item));
+						acMem.removeItemAt(0);
+						acMem.addItem(new ObjectProxy(itemMem));
+					}
 				});
 				RemoteProxy.bind('Console.Service.Info.Failed',function(request:XML):void{
-					remove();
-					ShowDialog(request.text(),false);
+					//remove();
+					//ShowDialog(request.text(),false);
 				});
 				RemoteProxy.send('Console.Service.Info',{});
 				timer.addEventListener(TimerEvent.TIMER,function(e:TimerEvent):void{
@@ -50,48 +105,106 @@
 				});
 				timer.start();
 			}
+			private function categoryLabelFunction(categoryValue:Object, 
+												   previousCategoryValue:Object, 
+												   axis:CategoryAxis, 
+												   categoryItem:Object):String 
+			{
+				return "";
+			}
+			private function valueLabelFunction(labelValue:Object, 
+												previousValue:Object, 
+												axis:LinearAxis):String {
+				return labelValue+"MB";
+			}
 		]]>
 	</fx:Script>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="服务器时间：{data.@time}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="在线客户：{data.@online}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="服务器时间：{data.@time}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="在线客户：{data.@online}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="数据库版本：{data.runtime.@mysql}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="数据库大小：{data.runtime.@dbsize}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="数据库版本：{data.runtime.@mysql}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="数据库大小：{data.runtime.@dbsize}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="服务版本：{data.@sspVersion}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="PHP版本：{data.@phpVersion}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="服务版本：{data.@sspVersion}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="PHP版本：{data.@phpVersion}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="服务启动时间：{data.@sspTime}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="服务已运行时间：{data.@sspRunTimed}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="服务启动时间：{data.@sspTime}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="服务已运行时间：{data.@sspRunTimed}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:Label width="100%" height="30" backgroundColor="#999999" fontSize="14" fontWeight="normal"
 			 paddingLeft="10" text="内存信息" verticalAlign="middle"/>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="数据段大小：{data.@arena}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="闲置块数：{data.@ordblks}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="用户CPU：{data.@sysCPUus}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="系统CPU：{data.@sysCPUsy}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="匿名映射数：{data.@hblks}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="匿名映射大小：{data.@hblkhd}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="切换CPU：{data.@sysCPUni}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="空闲CPU：{data.@sysCPUid}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="快速垃圾箱数：{data.@smblks}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="可用快速垃圾箱的大小：{data.@fsmblks}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="总内存：{data.@sysMemTotal}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="用户内存：{data.@sysMemUsed}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
 	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="最大分配大小：{data.@usmblks}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="微调空间：{data.@keepcost}" verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="进程CPU：{data.@procCPU}"
+				 verticalAlign="middle"/>
+		<s:Label width="100%" height="100%" fontSize="14" text="进程内存：{data.@procMem}"
+				 verticalAlign="middle"/>
 	</s:HGroup>
-	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="总分配空间：{data.@uordblks}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="可用块的大小：{data.@fordblks}" verticalAlign="middle"/>
-	</s:HGroup>
-	<s:HGroup width="100%" height="30">
-		<s:Label width="100%" height="100%" fontSize="14" text="PHP使用峰值：{data.@memoryPeakUsage}" verticalAlign="middle"/>
-		<s:Label width="100%" height="100%" fontSize="14" text="PHP占用内存：{data.@memoryUsage}" verticalAlign="middle"/>
-	</s:HGroup>
+	<mx:LineChart id="chart" width="100%" height="100%" dataProvider="{ac}" fontSize="14"
+				  horizontalCenter="0" seriesFilters="[]" showDataTips="true" verticalCenter="0">
+		<mx:backgroundElements>  
+			<mx:GridLines gridDirection="both"/>
+		</mx:backgroundElements>
+		<mx:horizontalAxis>
+			<mx:CategoryAxis categoryField="time" labelFunction="categoryLabelFunction"/>
+		</mx:horizontalAxis>
+		
+		<mx:verticalAxis>
+			<mx:LinearAxis maximum="100" minimum="0"/>
+		</mx:verticalAxis>
+		
+		<mx:series>
+			<mx:LineSeries displayName="用户CPU" form="curve" xField="time" yField="sysCPUus" lineStroke="{s1}"/>
+			<mx:LineSeries displayName="系统CPU" form="curve" xField="time" yField="sysCPUsy" lineStroke="{s2}"/>
+			<mx:LineSeries displayName="切换CPU" form="curve" xField="time" yField="sysCPUni" lineStroke="{s3}"/>
+			<mx:LineSeries displayName="空闲CPU" form="curve" xField="time" yField="sysCPUid" lineStroke="{s4}"/>
+			<mx:LineSeries displayName="进程CPU" form="curve" xField="time" yField="procCPU" lineStroke="{s5}"/>
+		</mx:series>
+	</mx:LineChart>
+	<mx:Legend width="100%" height="30" dataProvider="{chart}" direction="horizontal" fontSize="14"
+			   legendItemClass="com.fenxihui.console.view.item.BigFontLegendItem"/>
+	<mx:LineChart id="chartMem" width="100%" height="100%" dataProvider="{acMem}" fontSize="14"
+				  horizontalCenter="0" seriesFilters="[]" showDataTips="true" verticalCenter="0">
+		<mx:backgroundElements>  
+			<mx:GridLines gridDirection="both"/>
+		</mx:backgroundElements>
+		<mx:horizontalAxis>
+			<mx:CategoryAxis categoryField="time" labelFunction="categoryLabelFunction"/>
+		</mx:horizontalAxis>
+		<mx:verticalAxis>
+			<mx:LinearAxis labelFunction="valueLabelFunction"/>
+		</mx:verticalAxis>
+		<mx:series>
+			<mx:LineSeries displayName="进程内存" form="curve" xField="time" yField="rss" lineStroke="{s6}"/>
+		</mx:series>
+	</mx:LineChart>
 </component:Window>

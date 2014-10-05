@@ -115,6 +115,7 @@ package com.fenxihui.library.data
 		
 		private function closeHandler(event:Event):void {
 			//trace("closeHandler: " + event);
+			clearBuffer();
 			trigger(CLOSE,[event]);
 			setTimeout(function():void{
 				connect();
@@ -148,16 +149,17 @@ package com.fenxihui.library.data
 				}
 				recvedLength=recvBuffer.length;
 				if(recvLength==recvedLength){
+					trigger(PROGRESS,[{recvedLength:recvedLength,recvLength:recvLength}]);
 					trigger(DATA,[XMLList(recvBuffer.readUTFBytes(recvLength))]);
 					recvBuffer.clear();
 					recvedLength=0;
 					recvLength=0;
-				}else{
-					trace('recvBuffer:',recvBuffer.toString());
+//				}else{
+//					trace('recvedLength:'+recvBuffer.length,'recvLength:'+recvLength);
 				}
 			}
 			if(recvedLength>0){
-				trigger(PROGRESS,[event]);
+				trigger(PROGRESS,[{recvedLength:recvedLength,recvLength:recvLength}]);
 			}
 		}
 		

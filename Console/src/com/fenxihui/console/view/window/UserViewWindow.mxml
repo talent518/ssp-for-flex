@@ -20,13 +20,6 @@
 			[Bindable]
 			public var serv:XML;
 			
-			protected function toolTipCreateHandler(event:ToolTipEvent):void
-			{
-				var tip:ToolTip=new ToolTip;
-				tip.setStyle('fontSize',14);
-				event.toolTip=tip;
-			}
-			
 		]]>
 	</fx:Script>
 	<s:HGroup width="100%">

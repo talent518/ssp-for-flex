@@ -6,26 +6,36 @@
 
 package org.gif.player
 {	
-	import flash.events.TimerEvent;
-	import flash.net.URLLoaderDataFormat;
-	import flash.net.URLLoader;
-	import flash.net.URLRequest;
+	import flash.display.Bitmap;
+	import flash.display.BitmapData;
+	import flash.errors.ScriptTimeoutError;
 	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.ProgressEvent;
+	import flash.events.TimerEvent;
+	import flash.geom.Rectangle;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
 	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
-	import flash.display.Bitmap;
-	import flash.display.BitmapData;
 	import flash.utils.getTimer;
-	import flash.events.IOErrorEvent;
-	import flash.errors.ScriptTimeoutError;
-	import org.gif.frames.GIFFrame;
+	
 	import org.gif.decoder.GIFDecoder;
-	import org.gif.events.GIFPlayerEvent;
-	import org.gif.events.FrameEvent;
-	import org.gif.events.TimeoutEvent;
-	import org.gif.events.FileTypeEvent;
 	import org.gif.errors.FileTypeError;
+	import org.gif.events.FileTypeEvent;
+	import org.gif.events.FrameEvent;
+	import org.gif.events.GIFPlayerEvent;
+	import org.gif.events.TimeoutEvent;
+	import org.gif.frames.GIFFrame;
+	
+	[Event(name="progress", type="flash.events.ProgressEvent")]
+	[Event(name="complete", type="org.gif.events.GIFPlayerEvent")]
+	[Event(name="timeout", type="org.gif.events.TimeoutEvent")]
+	[Event(name="invalid", type="org.gif.events.FileTypeEvent")]
+	[Event(name="rendered", type="org.gif.events.FrameEvent")]
+	[Event(name="ioError", type="flash.events.IOErrorEvent")]
 	
 	public class GIFPlayer extends Bitmap
 	{
@@ -47,13 +57,18 @@ package org.gif.player
 			aFrames = new Array();
 			urlLoader = new URLLoader();
 			urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
-			
+			urlLoader.addEventListener(ProgressEvent.PROGRESS,onProgress);
 			urlLoader.addEventListener ( Event.COMPLETE, onComplete );
 			urlLoader.addEventListener ( IOErrorEvent.IO_ERROR, onIOError );
 			
 			myTimer.addEventListener ( TimerEvent.TIMER, update );
 			
 			gifDecoder = new GIFDecoder();
+		}
+
+		private function onProgress ( pEvt:ProgressEvent ):void
+		{
+			dispatchEvent ( pEvt );	
 		}
 		
 		private function onIOError ( pEvt:IOErrorEvent ):void

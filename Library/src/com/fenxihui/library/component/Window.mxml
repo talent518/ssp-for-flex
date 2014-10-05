@@ -6,13 +6,20 @@
 		   horizontalAlign="left" showStatusBar="false" styleName="window" systemChrome="none"
 		   title="全能股市操盘系统" transparent="true" titleIcon="@Embed(source='assets/icon_title.png')">
 	<fx:Metadata>
-		[Style(name = "borderThickness" ,defaultValue='1', type = "uint" , format = "uint" , inherit = "no" )]
-		[Style(name = "backgroundColor" , type = "uint" , format = "Color" , inherit = "no" )]
-		[Style(name = "backgroundAlpha" , type = "Number" , format = "Length" , inherit = "no" )]
+		[Style(name = "topLeftRadius" ,defaultValue='0', type = "uint", format = "Length", inherit = "no" )]
+		[Style(name = "topRightRadius" ,defaultValue='0', type = "uint", format = "Length", inherit = "no" )]
+		[Style(name = "bottomLeftRadius" ,defaultValue='0', type = "uint", format = "Length", inherit = "no" )]
+		[Style(name = "bottomRightRadius" ,defaultValue='0',  type = "uint", format = "Length", inherit = "no" )]
+		[Style(name="cornerRadius", type="Number", format="Length", inherit="no", theme="halo, spark")]
+		[Style(name = "borderThickness" ,defaultValue='1', type = "uint", format = "Length", inherit = "no" )]
+		[Style(name = "borderColor" ,defaultValue='0xb60002', type = "uint", format = "Length", inherit = "no" )]
+		[Style(name = "backgroundVisible" ,defaultValue='true', type = "Boolean" , inherit = "no" )]
+		[Style(name = "backgroundColor" ,defaultValue="0xefefef", type = "uint" , format = "Color" , inherit = "no" )]
+		[Style(name = "backgroundAlpha" ,defaultValue="1.0" , type = "Number" , format = "Length" , inherit = "no" )]
 		[Style(name = "backgroundImage" , type = "Class" , format = "EmbeddedFile" , inherit = "no" )]
-		[Style(name = "backgroundPositionLeft",defaultValue='0' , type = "int" , format = "int" , inherit = "no" )]
-		[Style(name = "backgroundPositionTop",defaultValue='0' , type = "int" , format = "int" , inherit = "no" )]
-		[Style(name = "backgroundRepeat" ,defaultValue='false', type = "Boolean" , format = "Boolean" , inherit = "no" )]
+		[Style(name = "backgroundPositionLeft",defaultValue='0' , type = "int" , inherit = "no" )]
+		[Style(name = "backgroundPositionTop",defaultValue='0' , type = "int" , inherit = "no" )]
+		[Style(name = "backgroundRepeat" ,defaultValue='false', type = "Boolean" , inherit = "no" )]
 	</fx:Metadata>
 	<fx:Style>
 		@namespace s "library://ns.adobe.com/flex/spark";
@@ -45,9 +52,16 @@
 	</fx:Style>
 	<fx:Script>
 		<![CDATA[
+			import mx.controls.ToolTip;
+			import mx.core.Container;
 			import mx.core.UIComponent;
 			import mx.core.windowClasses.TitleBar;
 			import mx.events.ResizeEvent;
+			import mx.events.ToolTipEvent;
+			import mx.utils.GraphicsUtil;
+			
+			import skins.TitleBarSkin;
+			use namespace mx_internal;
 			
 			private var _closeButtonVisible:Boolean=true;
 			private var _maxButtonVisible:Boolean=true;
@@ -66,7 +80,9 @@
 				}
 				if(_minButtonVisible==false){
 					//sysTitleBar.minimizeButton.visible=sysTitleBar.minimizeButton.includeInLayout=false;
-					sysTitleBar.removeChild(sysTitleBar.minimizeButton);
+					if(sysTitleBar==sysTitleBar.minimizeButton.parent){
+						sysTitleBar.removeChild(sysTitleBar.minimizeButton);
+					}
 				}else{
 					//sysTitleBar.minimizeButton.visible=sysTitleBar.minimizeButton.includeInLayout=true;
 					sysTitleBar.addChild(sysTitleBar.minimizeButton);
@@ -89,7 +105,9 @@
 				if(_maxButtonVisible==false){
 					sysTitleBar.doubleClickEnabled=false;
 					//sysTitleBar.maximizeButton.visible=sysTitleBar.maximizeButton.includeInLayout=false;
-					sysTitleBar.removeChild(sysTitleBar.maximizeButton);
+					if(sysTitleBar==sysTitleBar.maximizeButton.parent){
+						sysTitleBar.removeChild(sysTitleBar.maximizeButton);
+					}
 				}else{
 					sysTitleBar.doubleClickEnabled=true;
 					//sysTitleBar.maximizeButton.visible=sysTitleBar.maximizeButton.includeInLayout=true;
@@ -112,7 +130,9 @@
 				}
 				if(_closeButtonVisible==false){
 					//sysTitleBar.closeButton.visible=sysTitleBar.closeButton.includeInLayout=false;
-					sysTitleBar.removeChild(sysTitleBar.closeButton);
+					if(sysTitleBar==sysTitleBar.closeButton.parent){
+						sysTitleBar.removeChild(sysTitleBar.closeButton);
+					}
 				}else{
 					//sysTitleBar.closeButton.visible=sysTitleBar.closeButton.includeInLayout=true;
 					sysTitleBar.addChild(sysTitleBar.closeButton);
@@ -131,28 +151,48 @@
 			}
 			
 			private var backgroundAlpha:Number;
-			
+
+			protected function toolTipCreateHandler(event:ToolTipEvent):void
+			{
+				var tip:ToolTip=new ToolTip;
+				tip.setStyle('fontSize',14);
+				event.toolTip=tip;
+			}
+
 			override protected function createChildren():void{
 				backgroundAlpha=getStyle('backgroundAlpha');
 				super.createChildren();
 				
 				if(!sysTitleBar){
 					if(getStyle('borderVisible')){
-						var border:Number=getStyle('borderWeight');
+						var border:Number=getStyle('borderThickness');
 						setStyle('paddingLeft',border);
 						setStyle('paddingRight',border);
-						//setStyle('paddingTop',border);
-						//setStyle('paddingBottom',border);
+						setStyle('paddingTop',border);
+						setStyle('paddingBottom',border);
 					}
 					return;
 				}
+				sysTitleBar.minimizeButton.toolTip='最小化窗口';
+				sysTitleBar.minimizeButton.addEventListener(ToolTipEvent.TOOL_TIP_CREATE,toolTipCreateHandler);
+				sysTitleBar.maximizeButton.toolTip='最大化窗口';
+				nativeWindow.addEventListener(NativeWindowDisplayStateEvent.DISPLAY_STATE_CHANGING,function(e:NativeWindowDisplayStateEvent):void{
+					if(sysTitleBar && sysTitleBar.maximizeButton){
+						sysTitleBar.maximizeButton.toolTip=(e.afterDisplayState == NativeWindowDisplayState.MAXIMIZED?'还原窗口':'最大化窗口');
+					}
+				});
+				sysTitleBar.maximizeButton.addEventListener(ToolTipEvent.TOOL_TIP_CREATE,toolTipCreateHandler);
+				sysTitleBar.closeButton.toolTip='关闭窗口';
+				sysTitleBar.closeButton.addEventListener(ToolTipEvent.TOOL_TIP_CREATE,toolTipCreateHandler);
+
 				minButtonVisible=_minButtonVisible;
 				maxButtonVisible=_maxButtonVisible;
 				closeButtonVisible=_closeButtonVisible;
 			}
 			private function initWindow():void{
-				if(titleBar && titleBar.visible)
+				if(titleBar && titleBar.visible){
 					height+=titleBar.height;
+				}
 				if(statusBar && statusBar.visible)
 					height+=statusBar.height;
 			}
@@ -163,41 +203,70 @@
 			
 			protected override function updateDisplayList(w:Number,h:Number):void{
 				super.updateDisplayList(w,h);
-
-				var cornerRadius:Number=getStyle('cornerRadius')*2;
-
+				
 				graphics.clear();
-				graphics.beginFill(getStyle('backgroundColor'),backgroundAlpha);
-				graphics.drawRect(0,0,w,h);
-				graphics.endFill();
-
-				if(getStyle('backgroundImage')){
-					var backgroundImage:Class=getStyle('backgroundImage');
-					var bm:Bitmap = new backgroundImage;
-					graphics.beginBitmapFill(bm.bitmapData,new Matrix(1,0,0,1,getStyle('backgroundPositionLeft'),getStyle('backgroundPositionTop')),getStyle('backgroundRepeat'));
-					graphics.drawRect(0,0,bm.width,bm.height);
+				
+				if(getStyle('backgroundVisible')!=false){
+					graphics.beginFill(getStyle('backgroundColor'),backgroundAlpha);
+					graphics.drawRect(0,0,w,h);
 					graphics.endFill();
+					
+					if(getStyle('backgroundImage')){
+						var backgroundImage:Class=getStyle('backgroundImage');
+						var bm:Bitmap = new backgroundImage;
+						graphics.beginBitmapFill(bm.bitmapData,new Matrix(1,0,0,1,getStyle('backgroundPositionLeft'),getStyle('backgroundPositionTop')),getStyle('backgroundRepeat'));
+						graphics.drawRect(0,0,bm.width,bm.height);
+						graphics.endFill();
+					}
 				}
+				
+				if(getStyle('borderVisible')!=false){
+					var cornerRadius:uint=getStyle('cornerRadius');
 
-				if(getStyle('borderVisible')){
+					var isComplex:Boolean=getStyle('topLeftRadius') || getStyle('topRightRadius') || getStyle('bottomLeftRadius') || getStyle('bottomRightRadius');
+
+					var topLeftRadius:uint=isComplex?getStyle('topLeftRadius'):cornerRadius;
+					var topRightRadius:uint=isComplex?getStyle('topRightRadius'):cornerRadius;
+					var bottomLeftRadius:uint=isComplex?getStyle('bottomLeftRadius'):cornerRadius;
+					var bottomRightRadius:uint=isComplex?getStyle('bottomRightRadius'):cornerRadius;
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(w, 30, Math.PI/2, 0, 0);  
 					graphics.lineStyle(getStyle('borderThickness')*2,getStyle('borderColor'),getStyle('borderAlpha'));
-					graphics.drawRoundRect(0,0,w,h,cornerRadius,cornerRadius);
-				}
+					graphics.lineGradientStyle(GradientType.LINEAR, [0xd2d2d2,
+						0x888888], [1, 1], [0, 255], gradientBoxMatrix);
+					//graphics.lineGradientStyle(GradientType.LINEAR, [0x000000, 0xFFFFFF], [1, 1], [0, 255], verticalGradientMatrix(0, 0, w, h));
+					graphics.drawRoundRectComplex(0,0,w,h,topLeftRadius,topRightRadius,bottomLeftRadius,bottomRightRadius);
+					graphics.endFill();
 
-				if(cornerRadius>0){
-					var _mask:Sprite=new Sprite;
-					_mask.graphics.beginFill(0x0);
-					_mask.graphics.drawRoundRect(0, 0,w,h,cornerRadius, cornerRadius);
-					_mask.graphics.endFill();
-					mask = _mask;
+					if(cornerRadius || isComplex){
+						var _mask:Sprite=new Sprite;
+						_mask.graphics.beginFill(0x0);
+						_mask.graphics.drawRoundRectComplex(0, 0,w,h,topLeftRadius,topRightRadius,bottomLeftRadius,bottomRightRadius);
+						_mask.graphics.endFill();
+						mask = _mask;
+						if(sysTitleBar){
+							var _mask2:Sprite=new Sprite;
+							_mask2.graphics.beginFill(0x0);
+							_mask2.graphics.drawRoundRectComplex(getStyle('borderThickness'), getStyle('borderThickness'),w-getStyle('borderThickness')*2,h-getStyle('borderThickness')*2,topLeftRadius,topRightRadius,bottomLeftRadius,bottomRightRadius);
+							_mask2.graphics.endFill();
+							sysTitleBar.mask=_mask2;
+						}
+					}
+				
 				}
 			}
-			
+			override protected function createBorder():void{
+			}
+
 			private var _moveObject:UIComponent;
 			public function get moveObject():UIComponent{
 				return _moveObject;
 			}
 			public function set moveObject(e:UIComponent):void{
+				if(!e) {
+					return;
+				}
 				_moveObject=e;
 				_moveObject.addEventListener(MouseEvent.MOUSE_DOWN,startMove);
 				_moveObject.addEventListener(MouseEvent.MOUSE_OVER,endMove);

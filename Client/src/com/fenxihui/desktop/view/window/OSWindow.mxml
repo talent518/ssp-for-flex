@@ -271,13 +271,6 @@
 				OSAddWindow.osAddWindow.setDoType(type);
 			}
 			
-			protected function toolTipCreateHandler(event:ToolTipEvent):void
-			{
-				var tip:ToolTip=new ToolTip;
-				tip.setStyle('fontSize',14);
-				event.toolTip=tip;
-			}
-			
 		]]>
 	</fx:Script>
 	<component:states>
